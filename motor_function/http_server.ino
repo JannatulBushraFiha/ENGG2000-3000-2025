@@ -1,7 +1,10 @@
 
 #include <WebServer.h>
 
+// experiment with removing forward declaration and see if still works
 bool bridge_open();
+bool bridge_close();
+bool stop();
 
 WebServer server(80);
 
@@ -304,8 +307,8 @@ void setupWebServer()
 
   // API endpoints
   server.on("/api/open", HTTP_POST, handleOpenBridge);
-  // server.on("/api/close", HTTP_POST, handleCloseBridge);
-  // server.on("/api/stop", HTTP_POST, handleEmergencyStop);
+  server.on("/api/close", HTTP_POST, handleCloseBridge);
+  server.on("/api/stop", HTTP_POST, handleEmergencyStop);
   // server.on("/api/status", HTTP_GET, handleGetStatus);
 
   // Handle 404 - invalid endpoint or URLs
@@ -324,6 +327,30 @@ void handleOpenBridge()
   if (bridge_open())
   {
     server.send(200, "application/json", "{\"status\":\"opening\"}");
+  }
+  else
+  {
+    server.send(500, "application/json", "{\"status\":\"error\"}");
+  }
+}
+
+void handleCloseBridge()
+{
+  if (bridge_close())
+  {
+    server.send(200, "application/json", "{\"status\":\"closing\"}");
+  }
+  else
+  {
+    server.send(500, "application/json", "{\"status\":\"error\"}");
+  }
+}
+
+void handleEmergencyStop()
+{
+  if (stop())
+  {
+    server.send(200, "application/json", "{\"status\":\"stopping\"}");
   }
   else
   {

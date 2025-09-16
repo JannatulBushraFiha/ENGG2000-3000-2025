@@ -54,19 +54,22 @@ bool bridge_open(){
 }
 
 //for given time that the bridge will take to reach ground
-void bridge_close(){
+//return true if operation succeed. 
+bool bridge_close(){
     digitalWrite(motor_driver_in1, LOW);
     digitalWrite(motor_driver_in2, HIGH);
     bridge_up = false;\
     warning_light();
+    return true; 
 }
 
 //it is run when the timer ends, or for emeregency stop
-void stop(){
+bool stop(){
     digitalWrite(motor_driver_in1, HIGH);
     digitalWrite(motor_driver_in2, HIGH);
     bridge_halt= true;
     warning_light();
+    return true;
 }
 
 void warning_light() {

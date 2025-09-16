@@ -16,6 +16,8 @@ bool bridge_halt= true;
 
 void setup() {
   // put your setup code here, to run once:
+  //call the setup WebServer function from http server 
+  setupWebServer(); 
 
   //Pins
   pinMode(motor_driver_in1, OUTPUT);
@@ -28,7 +30,8 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-blink_altitude_light();
+  blink_altitude_light();
+  handleWebServerClients();
 }
 
 void automatedSensor(){

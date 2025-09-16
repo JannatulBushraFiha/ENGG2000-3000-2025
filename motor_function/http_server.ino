@@ -1,5 +1,6 @@
 
 #include <WebServer.h>
+#include <WiFi.h>
 
 bool bridge_open();
 
@@ -321,6 +322,11 @@ void setupWebServer()
                       { server.send(404, "text/plain", "Not found"); });
     server.begin();
 }
+
+void handleWebServerClients() {
+  server.handleClients();
+}
+
 
 void handleOpenBridge()
 {

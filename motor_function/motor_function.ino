@@ -18,6 +18,7 @@ void setup() {
   // put your setup code here, to run once:
   //call the setup WebServer function from http server 
   setupWebServer(); 
+  setupWiFi(); 
 
   //Pins
   pinMode(motor_driver_in1, OUTPUT);

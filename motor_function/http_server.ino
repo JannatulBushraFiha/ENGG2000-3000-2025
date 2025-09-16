@@ -1,9 +1,6 @@
 
 #include <WebServer.h>
 
-
-
-
 bool bridge_open();
 
 WebServer server(80);
@@ -92,6 +89,17 @@ const char HTML_PAGE[] = R"rawliteral(
         box-shadow: 0 0 0.375rem grey;
     }
 
+
+
+
+
+
+
+
+
+
+
+
     .bottom-row {
       display: flex;
       gap: 20px;
@@ -159,6 +167,11 @@ const char HTML_PAGE[] = R"rawliteral(
 </head>
 
 
+
+
+
+
+
 <body>
   <div class="container">
 
@@ -218,6 +231,18 @@ const char HTML_PAGE[] = R"rawliteral(
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
   <script>
   // Bridge States 
   // Making objects immutable 
@@ -237,68 +262,32 @@ const char HTML_PAGE[] = R"rawliteral(
   const shipPassingLight = document.getElementById("shipPassingLight"); 
   
 
-  // Mutable States 
-  let state = BridgeState.DOWN;     // setting default state to be down 
-  let moveTimer = null;             // variable to store pending timer 
-  let eStopActive = false;          // Boolean to check whether the Emergency STOP is currently pressed and latched 
-
   // Functions 
 
   //Making UI Aligns with the Mutable State 
   function setBridgeStatus(newState) {
-    state = newState;
     bridgeStatusElement.textContent = newState;
   }
 
-  //Cancel scheduled move
-  function clearMoveTimer() {
-    if (moveTimer) {                //If a 10s timer is currently set 
-      clearTimeout(moveTimer);      //Cancel the timer that's currently scheduled 
-      moveTimer = null;
-    }
-  }
-
-  //Disable Button Movements 
-  function disableMotionButtons(disabled) {
-    btnOpen.disabled  = disabled;
-    btnClose.disabled = disabled;
-  }
-
-
-  function startMove(finalState) {
-  // Allow moves from HALT (manual mode) or normal mode.
-  // Only ignore if we're already mid-move.
-  if (state === BridgeState.MOVING) return;
-
-  clearMoveTimer();                         // cancel any old timer just in case
-  setBridgeStatus(BridgeState.MOVING);
-  disableMotionButtons(true);
-
-  moveTimer = setTimeout(() => {
-    setBridgeStatus(finalState);
-    disableMotionButtons(false);
-    moveTimer = null;
-  }, 5_000);
-}
   // Button handlers 
   btnOpen.addEventListener("click", () => {
-  startMove(BridgeState.UP);                // works even after E-Stop HALT
-});
+    sendCommand("/api/open");
+  });
 
   btnClose.addEventListener("click", () => {
-  startMove(BridgeState.DOWN);              // works even after E-Stop HALT
-});
+    sendCommand("/api/close");
+  });
 
   btnStop.addEventListener("click", () => {
-  eStopActive = true;                       // for mode lights
-  clearMoveTimer();                         // kill any pending completion
-  setBridgeStatus(BridgeState.HALT);        // immediate halt
-  disableMotionButtons(false);              // keep buttons usable in manual
-});
+    sendCommand("/api/stop");
+  });
 
-
-  // Init: ensure the status label matches the current state
-  setBridgeStatus(state);
+  function sendCommand(endpoint) {
+    fetch(endpoint, { method: 'POST' })
+      .then(response => response.json())
+      .then(data => console.log(data))
+      .catch(error => console.error('Error:', error));
+  }
 
   </script>
 </body>
@@ -308,36 +297,36 @@ const char HTML_PAGE[] = R"rawliteral(
 
 void setupWebServer()
 {
-    // When someone requests the root of a website
-    // Then, return HTML
-    server.on("/", HTTP_GET, []()
-              { server.send(200, "text/html", HTML_PAGE); });
+  // When someone requests the root of a website
+  // Then, return HTML
+  server.on("/", HTTP_GET, []()
+            { server.send(200, "text/html", HTML_PAGE); });
 
-    // API endpoints
-    server.on("/api/open", HTTP_POST, handleOpenBridge);
-    // server.on("/api/close", HTTP_POST, handleCloseBridge);
-    // server.on("/api/stop", HTTP_POST, handleEmergencyStop);
-    // server.on("/api/status", HTTP_GET, handleGetStatus);
+  // API endpoints
+  server.on("/api/open", HTTP_POST, handleOpenBridge);
+  // server.on("/api/close", HTTP_POST, handleCloseBridge);
+  // server.on("/api/stop", HTTP_POST, handleEmergencyStop);
+  // server.on("/api/status", HTTP_GET, handleGetStatus);
 
-    // Handle 404 - invalid endpoint or URLs
-    server.onNotFound([]()
-                      { server.send(404, "text/plain", "Not found"); });
-    server.begin();
+  // Handle 404 - invalid endpoint or URLs
+  server.onNotFound([]()
+                    { server.send(404, "text/plain", "Not found"); });
+  server.begin();
 }
 
-void handleWebServerClients() {
+void handleWebServerClients()
+{
   server.handleClient();
 }
 
-
 void handleOpenBridge()
 {
-    if (bridge_open())
-    {
-        server.send(200, "application/json", "{\"status\":\"opening\"}");
-    }
-    else
-    {
-        server.send(500, "application/json", "{\"status\":\"error\"}");
-    }
+  if (bridge_open())
+  {
+    server.send(200, "application/json", "{\"status\":\"opening\"}");
+  }
+  else
+  {
+    server.send(500, "application/json", "{\"status\":\"error\"}");
+  }
 }

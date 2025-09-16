@@ -254,68 +254,32 @@
   const shipPassingLight = document.getElementById("shipPassingLight"); 
   
 
-  // Mutable States 
-  let state = BridgeState.DOWN;     // setting default state to be down 
-  let moveTimer = null;             // variable to store pending timer 
-  let eStopActive = false;          // Boolean to check whether the Emergency STOP is currently pressed and latched 
-
   // Functions 
 
   //Making UI Aligns with the Mutable State 
   function setBridgeStatus(newState) {
-    state = newState;
     bridgeStatusElement.textContent = newState;
   }
 
-  //Cancel scheduled move
-  function clearMoveTimer() {
-    if (moveTimer) {                //If a 10s timer is currently set 
-      clearTimeout(moveTimer);      //Cancel the timer that's currently scheduled 
-      moveTimer = null;
-    }
-  }
-
-  //Disable Button Movements 
-  function disableMotionButtons(disabled) {
-    btnOpen.disabled  = disabled;
-    btnClose.disabled = disabled;
-  }
-
-
-  function startMove(finalState) {
-  // Allow moves from HALT (manual mode) or normal mode.
-  // Only ignore if we're already mid-move.
-  if (state === BridgeState.MOVING) return;
-
-  clearMoveTimer();                         // cancel any old timer just in case
-  setBridgeStatus(BridgeState.MOVING);
-  disableMotionButtons(true);
-
-  moveTimer = setTimeout(() => {
-    setBridgeStatus(finalState);
-    disableMotionButtons(false);
-    moveTimer = null;
-  }, 5_000);
-}
   // Button handlers 
   btnOpen.addEventListener("click", () => {
-  startMove(BridgeState.UP);                // works even after E-Stop HALT
-});
+    sendCommand("/api/open");
+  });
 
   btnClose.addEventListener("click", () => {
-  startMove(BridgeState.DOWN);              // works even after E-Stop HALT
-});
+    sendCommand("/api/close");
+  });
 
   btnStop.addEventListener("click", () => {
-  eStopActive = true;                       // for mode lights
-  clearMoveTimer();                         // kill any pending completion
-  setBridgeStatus(BridgeState.HALT);        // immediate halt
-  disableMotionButtons(false);              // keep buttons usable in manual
-});
+    sendCommand("/api/stop");
+  });
 
-
-  // Init: ensure the status label matches the current state
-  setBridgeStatus(state);
+  function sendCommand(endpoint) {
+    fetch(endpoint, { method: 'POST' })
+      .then(response => response.json())
+      .then(data => console.log(data))
+      .catch(error => console.error('Error:', error));
+  }
 
   </script>
 </body>

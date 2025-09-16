@@ -40,11 +40,13 @@ void automatedSensor(){
 //Manual control from the UI
 
 //for given time that the bridge will take to reach max height
-void bridge_open(){
+//return true if operation succeed. 
+bool bridge_open(){
     digitalWrite(motor_driver_in1, HIGH);
     digitalWrite(motor_driver_in2, LOW);
     warning_light();
     bridge_up = true;
+    return true;
 }
 
 //for given time that the bridge will take to reach ground
@@ -65,7 +67,7 @@ void stop(){
 
 void warning_light() {
   if (bridge_up || bridge_halt) {
-    if (incoming marine vehicles sensed) { 
+    if (/*incoming marine vehicles sensed*/ false) { 
       digitalWrite(RED_WARNING_LIGHT, HIGH);
     }
     else {

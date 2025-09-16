@@ -326,7 +326,7 @@ void setupWebServer()
 }
 
 void handleWebServerClients() {
-  server.handleClients();
+  server.handleClient();
 }
 
 

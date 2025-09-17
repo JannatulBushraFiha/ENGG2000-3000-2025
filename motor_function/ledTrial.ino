@@ -1,5 +1,5 @@
 // LED Pins
-#define RED_WARNING_LIGHT 27 // turns red when there is marine vehicles coming in
+#define RED_WARNING_LIGHT 5 // turns red when there is marine vehicles coming in
 #define RED_ALTITUDE_LIGHT 11
 #define NIGHT_LIGHTS 12
 unsigned long previousMillis = 0;

@@ -1,14 +1,9 @@
-<<<<<<< HEAD
 //#include wifi.h
 
 
 #define motor_driver_in1 23 //motor spin "high"
 #define motor_driver_in2 22 //motor spin "low"
 #define motor_driver_pwm 9 //motor speed control
-=======
-#define motor_driver_in1 26 //motor spin "high"
-#define motor_driver_in2 25 //motor spin "low"
->>>>>>> dfc02922e311f2c3747b444d67c439ec910c7f95
 
 // LED Pins
 #define RED_WARNING_LIGHT 4 // turns red when there is marine vehicles coming in
@@ -39,20 +34,13 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-<<<<<<< HEAD
     bridge_open();
     digitalWrite(RED_WARNING_LIGHT, HIGH);
     delay(1000);
     digitalWrite(RED_WARNING_LIGHT, LOW);
     delay(1000);
-
-
-
-
-=======
-  blink_altitude_light();
-  handleWebServerClients();
->>>>>>> dfc02922e311f2c3747b444d67c439ec910c7f95
+    blink_altitude_light();
+    handleWebServerClients();
 }
 
 void automatedSensor(){
@@ -68,14 +56,9 @@ void automatedSensor(){
 bool bridge_open(){
     digitalWrite(motor_driver_in1, HIGH);
     digitalWrite(motor_driver_in2, LOW);
-<<<<<<< HEAD
-    //warning_light();
-    //bridge_up = true;
-=======
     warning_light();
     bridge_up = true;
     return true;
->>>>>>> dfc02922e311f2c3747b444d67c439ec910c7f95
 }
 
 //for given time that the bridge will take to reach ground
@@ -83,13 +66,9 @@ bool bridge_open(){
 bool bridge_close(){
     digitalWrite(motor_driver_in1, LOW);
     digitalWrite(motor_driver_in2, HIGH);
-    bridge_up = false;\
-<<<<<<< HEAD
-   // warning_light();
-=======
+    bridge_up = false;
     warning_light();
     return true; 
->>>>>>> dfc02922e311f2c3747b444d67c439ec910c7f95
 }
 
 //it is run when the timer ends, or for emeregency stop
@@ -97,12 +76,8 @@ bool stop(){
     digitalWrite(motor_driver_in1, HIGH);
     digitalWrite(motor_driver_in2, HIGH);
     bridge_halt= true;
-<<<<<<< HEAD
-    //warning_light();
-=======
     warning_light();
     return true;
->>>>>>> dfc02922e311f2c3747b444d67c439ec910c7f95
 }
 
 void warning_light() {

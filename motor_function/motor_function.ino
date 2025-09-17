@@ -1,6 +1,5 @@
-#define motor_driver_in1 5 //motor spin "high"
-#define motor_driver_in2 6 //motor spin "low"
-#define motor_driver_pwm 9 //motor speed control
+#define motor_driver_in1 26 //motor spin "high"
+#define motor_driver_in2 25 //motor spin "low"
 
 // LED Pins
 #define RED_WARNING_LIGHT 10 // turns red when there is marine vehicles coming in

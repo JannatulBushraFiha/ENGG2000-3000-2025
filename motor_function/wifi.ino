@@ -3,12 +3,7 @@
 const char* apSSID = "BridgeESP32"; 
 const char* apPassword = "bridge1234"; 
 
-void setup() {
-    //Talking over USB 
-    Serial.begin(115200);
-    //1 second  
-    delay(1000); 
-
+void setupWiFi() {
     //Start WiFi in Access Point mode 
     WiFi.softAP(apSSID, apPassword); 
 
@@ -21,5 +16,4 @@ void setup() {
     Serial.println(apPassword);
     Serial.print("AP IP address: ");
     Serial.println(IP);
-
 }

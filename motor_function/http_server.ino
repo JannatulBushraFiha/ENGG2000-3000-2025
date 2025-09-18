@@ -1,4 +1,3 @@
-
 #include <WebServer.h>
 
 // experiment with removing forward declaration and see if still works
@@ -300,6 +299,8 @@ const char HTML_PAGE[] = R"rawliteral(
 
 void setupWebServer()
 {
+  Serial.println("http_server::setupWebServer() start");
+
   // When someone requests the root of a website
   // Then, return HTML
   server.on("/", HTTP_GET, []()
@@ -315,6 +316,8 @@ void setupWebServer()
   server.onNotFound([]()
                     { server.send(404, "text/plain", "Not found"); });
   server.begin();
+  Serial.println("http_server::setupWebServer() end");
+
 }
 
 void handleWebServerClients()

@@ -327,6 +327,7 @@ void handleWebServerClients()
 
 void handleOpenBridge()
 {
+  Serial.println("http_server::handleOpenBridge()");
   if (bridge_open())
   {
     server.send(200, "application/json", "{\"status\":\"opening\"}");
@@ -339,6 +340,7 @@ void handleOpenBridge()
 
 void handleCloseBridge()
 {
+  Serial.println("http_server::handleCloseBridge()");
   if (bridge_close())
   {
     server.send(200, "application/json", "{\"status\":\"closing\"}");
@@ -351,6 +353,7 @@ void handleCloseBridge()
 
 void handleEmergencyStop()
 {
+  Serial.println("http_server::handleStop()");
   if (stop())
   {
     server.send(200, "application/json", "{\"status\":\"stopping\"}");

@@ -22,9 +22,4 @@ void setup() {
     Serial.print("AP IP address: ");
     Serial.println(IP);
 
-    void loop(){
-        
-    }
-
-
 }

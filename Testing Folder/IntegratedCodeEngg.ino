@@ -40,6 +40,8 @@ void setup() {
 }
 
 void loop() {
+  //add this otherwise the website wouldn't load. 
+  handleWebServerClients();
   motorFunctionLoop();
   // Trigger the ultrasonic pulse
   digitalWrite(trigPin, LOW);

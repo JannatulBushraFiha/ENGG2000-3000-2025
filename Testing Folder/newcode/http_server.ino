@@ -1,4 +1,9 @@
 #include <WebServer.h>
+#include <Arduino.h>
+#include "state.h"   // brings in enums + extern g_mode/g_cmd
+
+
+  // start manual if you like
 void setupWebServer();
 void handleWebServerClients();
 void handleOpenBridge();
@@ -10,6 +15,8 @@ void handleEmergencyStop();
 extern bool bridge_open();
 extern bool bridge_close();
 extern bool stop();
+extern SystemMode g_mode;
+extern BridgeCmd  g_cmd;
 
 WebServer server(80);
 
@@ -303,31 +310,43 @@ const char HTML_PAGE[] = R"rawliteral(
 </html>
 )rawliteral";
 
-void setupWebServer()
-{
+void setupWebServer() {
   Serial.println("http_server::setupWebServer() start");
 
-  // When someone requests the root of a website
-  // Then, return HTML
-  server.on("/", HTTP_GET, []()
-            { server.send(200, "text/html", HTML_PAGE); });
+  server.on("/", HTTP_GET, []() {
+    server.send(200, "text/html", HTML_PAGE);
+  });
 
-  // API endpoints
-  server.on("/api/open", HTTP_POST, handleOpenBridge);
-  server.on("/api/close", HTTP_POST, handleCloseBridge);
-  server.on("/api/stop", HTTP_POST, handleEmergencyStop);
-  // server.on("/api/status", HTTP_GET, handleGetStatus);
+  // Manual commands (SET VARIABLES, not types!)
+  server.on("/api/open",  HTTP_POST, [](){
+    g_mode = MODE_MANUAL;
+    g_cmd  = CMD_OPEN;
+    server.send(200, "application/json", "{\"status\":\"opening\"}");
+  });
 
-  // Handle 404 - invalid endpoint or URLs
-  server.onNotFound([]()
-                    { server.send(404, "text/plain", "Not found"); });
+  server.on("/api/close", HTTP_POST, [](){
+    g_mode = MODE_MANUAL;
+    g_cmd  = CMD_CLOSE;
+    server.send(200, "application/json", "{\"status\":\"closing\"}");
+  });
+
+  server.on("/api/stop",  HTTP_POST, [](){
+    g_cmd  = CMD_STOP;
+    server.send(200, "application/json", "{\"status\":\"stopping\"}");
+  });
+
+  // Optional mode endpoints
+  server.on("/api/mode/auto",   HTTP_POST, [](){ g_mode = MODE_AUTO;  server.send(200, "application/json", "{\"mode\":\"auto\"}");   });
+  server.on("/api/mode/manual", HTTP_POST, [](){ g_mode = MODE_MANUAL;server.send(200, "application/json", "{\"mode\":\"manual\"}"); });
+
+  server.onNotFound([](){ server.send(404, "text/plain", "Not found"); });
   server.begin();
   Serial.println("http_server::setupWebServer() end");
-
 }
 
 void handleWebServerClients()
 {
+  
   server.handleClient();
 }
 
@@ -369,3 +388,8 @@ void handleEmergencyStop()
     server.send(500, "application/json", "{\"status\":\"error\"}");
   }
 }
+
+
+
+
+

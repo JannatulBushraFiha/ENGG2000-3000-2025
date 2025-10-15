@@ -6,8 +6,8 @@
 //static const char* apPassword = "yq2m8q7ixmf53i5"; 
 //static const char* STA_SSID = "JannatulBushra's A15"; 
 //static const char* STA_PASSWORD = "yq2m8q7ixmf53i5"; 
-static const char* STA_SSID = "Ruran's iPhone"; 
-static const char* STA_PASSWORD = "wdtyahwhd76"; 
+static const char* STA_SSID = "iPhone"; 
+static const char* STA_PASSWORD = "12345678$"; 
 
 
 
@@ -35,6 +35,7 @@ void setupWiFi() {
     Serial.println(WiFi.SSID());
     Serial.print("ESP32 IP Address: ");
     Serial.println(WiFi.localIP());
+}
 
     //Serial.println("ESP32 Access Point Started!");
     //Serial.println(apSSID);
@@ -42,4 +43,4 @@ void setupWiFi() {
     //Serial.println(apPassword);
     //Serial.print("AP IP address: ");
     //Serial.println(IP);
-}
+

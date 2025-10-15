@@ -1,12 +1,22 @@
 #include <Arduino.h>
 #include <WiFi.h> 
 #include <WebServer.h>
+#include "state.h"
+
+
+SystemMode g_mode = MODE_MANUAL;  // start manual
+BridgeCmd  g_cmd  = CMD_IDLE;
 
 //Some forward declarations so the files compiled even not in alphabetical order 
 void setupWiFi(); 
 void setupWebServer(); 
 void setupMotorFunction(); 
 void motorFunctionLoop(); 
+//forward declare handleWebServerClients() so not out of scope. 
+void handleWebServerClients(); 
+
+void initUltrasonic();
+bool readUltrasonicOnce(float& out_cm);
 
 
 #define trigPin 22
@@ -20,11 +30,13 @@ unsigned long previousMillis = 0;
 const unsigned long interval = 500;
 int LED_STATE = LOW;
 
-float duration, distance;
+float g_distance_cm = -1.0f;   // single source of truth
 
 void setup() {
+  Serial.begin(115200);
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
+
   pinMode(RED_WARNING_LIGHT, OUTPUT);
   pinMode(motor_driver_in1, OUTPUT);
   pinMode(motor_driver_in2, OUTPUT);
@@ -34,29 +46,42 @@ void setup() {
   Serial.begin(115200);
   
   //Call Wifi&Server functions 
+  initUltrasonic();
   setupWiFi(); 
   setupWebServer();
   setupMotorFunction();
 }
 
 void loop() {
+  
+  //add this otherwise the website wouldn't load. 
   motorFunctionLoop();
+  handleWebServerClients();
+
+  static uint32_t lastPing = 0;
+  if (millis() - lastPing >= 60) {
+    lastPing = millis();
+    float cm;
+    if (readUltrasonicOnce(cm)) {
+      g_distance_cm = cm;       // only update on success
+    }
+  }
+
+  Serial.print("Distance: ");
+  Serial.println(g_distance_cm, 2);
   // Trigger the ultrasonic pulse
-  digitalWrite(trigPin, LOW);
+  /*digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
+  digitalWrite(trigPin, LOW);/*/
 
   // Measure echo time
-  duration = pulseIn(echoPin, HIGH);
-  distance = (duration * 0.0343) / 2; // distance in cm
-
-  Serial.print("Distance: ");
-  Serial.println(distance);
+ 
+  
 
   // Blink LED if object < 20 cm
-  if (distance < 20) {
+  /*if (distance < 20) {
     digitalWrite(motor_driver_in1, HIGH);
     digitalWrite(motor_driver_in2, LOW);
 
@@ -74,8 +99,8 @@ void loop() {
     digitalWrite(motor_driver_in2, LOW);
     digitalWrite(RED_WARNING_LIGHT, LOW);
     LED_STATE = LOW;
-  }
+  }/*/
 
-  delay(50);//small delay for stability
+  //delay(50);//small delay for stability
 }
     

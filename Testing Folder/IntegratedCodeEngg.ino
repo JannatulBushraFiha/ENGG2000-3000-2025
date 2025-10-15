@@ -7,6 +7,8 @@ void setupWiFi();
 void setupWebServer(); 
 void setupMotorFunction(); 
 void motorFunctionLoop(); 
+//forward declare handleWebServerClients() so not out of scope. 
+void handleWebServerClients(); 
 
 
 #define trigPin 22

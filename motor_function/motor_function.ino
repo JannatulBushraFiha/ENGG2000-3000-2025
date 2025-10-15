@@ -1,27 +1,40 @@
+<<<<<<< HEAD
 //#include wifi.h
 
 
 #define motor_driver_in1 23 //motor spin "high"
 #define motor_driver_in2 22 //motor spin "low"
 #define motor_driver_pwm 9 //motor speed control
+=======
+#define motor_driver_in1 23 //motor spin "high"
+#define motor_driver_in2 22 //motor spin "low"
+#define motor_driver_pwm 32 //motor speed control, changed 9 to 32 
+>>>>>>> a65e8b20bb527aa6cb8c401aafb8bc3217289051
 
 // LED Pins
-#define RED_WARNING_LIGHT 4 // turns red when there is marine vehicles coming in
-#define RED_ALTITUDE_LIGHT 11
-#define NIGHT_LIGHTS 12
+#define RED_WARNING_LIGHT 25 // turns red when there is marine vehicles coming in
+#define RED_ALTITUDE_LIGHT 26 // changed from 11 because 11 is forbidden by the ESP32 so it crashes
+#define NIGHT_LIGHTS 27 // changed from 12 so ESP32 will allow it
 
 
 bool bridge_up = false;
 bool bridge_halt= true;
 
+//forward declaration
+bool bridge_open();
+bool bridge_close();
+bool stop();
 
 //pins for sensor here
 
 void setup() {
   // put your setup code here, to run once:
   //call the setup WebServer function from http server 
-  setupWebServer(); 
+  Serial.begin(115200); 
   setupWiFi(); 
+  setupWebServer();
+  setupLedTrial(); 
+  setupUS(); 
 
   //Pins
   pinMode(motor_driver_in1, OUTPUT);
@@ -34,6 +47,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+<<<<<<< HEAD
     bridge_open();
     digitalWrite(RED_WARNING_LIGHT, HIGH);
     delay(1000);
@@ -41,6 +55,12 @@ void loop() {
     delay(1000);
     blink_altitude_light();
     handleWebServerClients();
+=======
+    blink_altitude_light();
+    handleWebServerClients();
+    ledTrialLoop(); 
+    loopUS(); 
+>>>>>>> a65e8b20bb527aa6cb8c401aafb8bc3217289051
 }
 
 void automatedSensor(){
@@ -56,7 +76,11 @@ void automatedSensor(){
 bool bridge_open(){
     digitalWrite(motor_driver_in1, HIGH);
     digitalWrite(motor_driver_in2, LOW);
+<<<<<<< HEAD
     warning_light();
+=======
+    //warning_light();
+>>>>>>> a65e8b20bb527aa6cb8c401aafb8bc3217289051
     bridge_up = true;
     return true;
 }
@@ -67,7 +91,11 @@ bool bridge_close(){
     digitalWrite(motor_driver_in1, LOW);
     digitalWrite(motor_driver_in2, HIGH);
     bridge_up = false;
+<<<<<<< HEAD
     warning_light();
+=======
+    //warning_light();
+>>>>>>> a65e8b20bb527aa6cb8c401aafb8bc3217289051
     return true; 
 }
 
@@ -76,7 +104,11 @@ bool stop(){
     digitalWrite(motor_driver_in1, HIGH);
     digitalWrite(motor_driver_in2, HIGH);
     bridge_halt= true;
+<<<<<<< HEAD
     warning_light();
+=======
+    //warning_light();
+>>>>>>> a65e8b20bb527aa6cb8c401aafb8bc3217289051
     return true;
 }
 

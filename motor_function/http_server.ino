@@ -1,4 +1,3 @@
-
 #include <WebServer.h>
 
 // experiment with removing forward declaration and see if still works
@@ -300,6 +299,8 @@ const char HTML_PAGE[] = R"rawliteral(
 
 void setupWebServer()
 {
+  Serial.println("http_server::setupWebServer() start");
+
   // When someone requests the root of a website
   // Then, return HTML
   server.on("/", HTTP_GET, []()
@@ -315,6 +316,8 @@ void setupWebServer()
   server.onNotFound([]()
                     { server.send(404, "text/plain", "Not found"); });
   server.begin();
+  Serial.println("http_server::setupWebServer() end");
+
 }
 
 void handleWebServerClients()
@@ -324,6 +327,7 @@ void handleWebServerClients()
 
 void handleOpenBridge()
 {
+  Serial.println("http_server::handleOpenBridge()");
   if (bridge_open())
   {
     server.send(200, "application/json", "{\"status\":\"opening\"}");
@@ -336,6 +340,7 @@ void handleOpenBridge()
 
 void handleCloseBridge()
 {
+  Serial.println("http_server::handleCloseBridge()");
   if (bridge_close())
   {
     server.send(200, "application/json", "{\"status\":\"closing\"}");
@@ -348,6 +353,7 @@ void handleCloseBridge()
 
 void handleEmergencyStop()
 {
+  Serial.println("http_server::handleStop()");
   if (stop())
   {
     server.send(200, "application/json", "{\"status\":\"stopping\"}");

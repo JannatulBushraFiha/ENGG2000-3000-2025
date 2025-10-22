@@ -116,7 +116,7 @@ void loop() {
   //--- Ultrasonic Ping, Detection and Processing END ---//
   
   // Blink LED if object < 20 cm
-  /*if (distance < 20) {
+  if (distance_1 < 20) {
     digitalWrite(motor_driver_in1, HIGH);
     digitalWrite(motor_driver_in2, LOW);
 

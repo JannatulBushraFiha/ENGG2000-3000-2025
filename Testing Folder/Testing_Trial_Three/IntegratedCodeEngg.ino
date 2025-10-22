@@ -6,7 +6,6 @@
 
 SystemMode g_mode = MODE_MANUAL;  // start manual
 BridgeCmd  g_cmd  = CMD_IDLE;
-#include <PulseInput.h>
 
 //Some forward declarations so the files compiled even not in alphabetical order 
 void setupWiFi(); 
@@ -16,15 +15,43 @@ void motorFunctionLoop();
 //forward declare handleWebServerClients() so not out of scope. 
 void handleWebServerClients(); 
 
-void initUltrasonic();
-bool readUltrasonicOnce(float& out_cm);
+//void initUltrasonic();
+//bool readUltrasonicOnce(float& out_cm);
 
+#define nightLightPin 17
+#define altitudeLightPin 5
 
 #define trigPin 22
 #define echoPin1 23
-#define echoPin2 4 //needs changing
-#define echoPin3 5 //needs changing
-#define echoPin4 6 //needs changing
+#define echoPin2 21
+#define echoPin3 19
+#define echoPin4 18
+
+volatile unsigned long startTimes[4];
+volatile unsigned long durations[4];
+volatile bool pulseDone[4];
+float distance_1, distance_2, distance_3, distance_4;
+int USstage = 1;
+unsigned long timeSincePing;
+unsigned long microSeconds;
+const unsigned long echoReadDelay = 10;
+
+void IRAM_ATTR handleEchoChange(int index, int pin) {
+  if (digitalRead(pin) == HIGH) {
+    startTimes[index] = micros();
+  } else {
+    durations[index] = micros() - startTimes[index];
+    pulseDone[index] = true;
+  }
+}
+
+void IRAM_ATTR echo1Change() { handleEchoChange(0, echoPin1); }
+void IRAM_ATTR echo2Change() { handleEchoChange(1, echoPin2); }
+void IRAM_ATTR echo3Change() { handleEchoChange(2, echoPin3); }
+void IRAM_ATTR echo4Change() { handleEchoChange(3, echoPin4); }
+
+
+
 #define RED_WARNING_LIGHT 25 // LED pin
 #define motor_driver_in1 15 //motor spin "high"
 #define motor_driver_in2 2 //motor spin "low"
@@ -40,27 +67,16 @@ void setup() {
   Serial.begin(115200);
 
   //--- Ultrasonic Sensor variable setup ---//
-  const int echoReadDelay = 10;
-  unsigned long microSeconds;
-  unsigned long timeSincePing;
-  int USstage = 1;
-  float distance_1, distance_2, distance_3, distance_4;
-  
-  volatile uint16_t duration_1;
-  volatile uint16_t duration_2;
-  volatile uint16_t duration_3;
-  volatile uint16_t duration_4;
-
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin1, INPUT);
   pinMode(echoPin2, INPUT);
   pinMode(echoPin3, INPUT);
   pinMode(echoPin4, INPUT);
 
-  attachPulseInput(echoPin1, duration_1);
-  attachPulseInput(echoPin2, duration_2);
-  attachPulseInput(echoPin3, duration_3);
-  attachPulseInput(echoPin4, duration_4);
+  attachInterrupt(digitalPinToInterrupt(echoPin1), echo1Change, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(echoPin2), echo2Change, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(echoPin3), echo3Change, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(echoPin4), echo4Change, CHANGE);
   //--- Ultrasonic Sensor Setup End ---//
   
   pinMode(RED_WARNING_LIGHT, OUTPUT);
@@ -69,9 +85,9 @@ void setup() {
   //Serial.begin(9600);
   //set the monitor to 115200 instead - ESP32's default system speed 
   Serial.begin(115200);
-  
+  Serial.println("Begin");
   //Call Wifi&Server functions 
-  initUltrasonic();
+  //initUltrasonic();
   setupWiFi(); 
   setupWebServer();
   setupMotorFunction();
@@ -100,10 +116,18 @@ void loop() {
     USstage = 1;
   }
 
-  distance_1 = (duration_1*.0343)/2;
-  distance_2 = (duration_2*.0343)/2;
-  distance_3 = (duration_3*.0343)/2;
-  distance_4 = (duration_4*.0343)/2;
+  noInterrupts();
+  unsigned long d1 = durations[0];
+  unsigned long d2 = durations[1];
+  unsigned long d3 = durations[2];
+  unsigned long d4 = durations[3];
+  interrupts();
+
+  distance_1 = (d1 * 0.0343) / 2;
+  distance_2 = (d2 * 0.0343) / 2;
+  distance_3 = (d3 * 0.0343) / 2;
+  distance_4 = (d4 * 0.0343) / 2;
+
 
   Serial.print("Distance: ");
   Serial.print(distance_1);

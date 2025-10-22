@@ -1,15 +1,12 @@
 #include <Arduino.h>
 #include <WiFi.h> 
 #include <WebServer.h>
-<<<<<<< HEAD:Testing Folder/newcode/IntegratedCodeEngg.ino
 #include "state.h"
 
 
 SystemMode g_mode = MODE_MANUAL;  // start manual
 BridgeCmd  g_cmd  = CMD_IDLE;
-=======
 #include <PulseInput.h>
->>>>>>> d9106992d81f40d8e40a5c69f2c40ebbf2f8bcac:Testing Folder/IntegratedCodeEngg.ino
 
 //Some forward declarations so the files compiled even not in alphabetical order 
 void setupWiFi(); 
@@ -40,12 +37,8 @@ int LED_STATE = LOW;
 float g_distance_cm = -1.0f;   // single source of truth
 
 void setup() {
-<<<<<<< HEAD:Testing Folder/newcode/IntegratedCodeEngg.ino
   Serial.begin(115200);
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
 
-=======
   //--- Ultrasonic Sensor variable setup ---//
   const int echoReadDelay = 10;
   unsigned long microSeconds;
@@ -70,7 +63,6 @@ void setup() {
   attachPulseInput(echoPin4, duration_4);
   //--- Ultrasonic Sensor Setup End ---//
   
->>>>>>> d9106992d81f40d8e40a5c69f2c40ebbf2f8bcac:Testing Folder/IntegratedCodeEngg.ino
   pinMode(RED_WARNING_LIGHT, OUTPUT);
   pinMode(motor_driver_in1, OUTPUT);
   pinMode(motor_driver_in2, OUTPUT);
@@ -86,35 +78,9 @@ void setup() {
 }
 
 void loop() {
-  
   //add this otherwise the website wouldn't load. 
   motorFunctionLoop();
-<<<<<<< HEAD:Testing Folder/newcode/IntegratedCodeEngg.ino
   handleWebServerClients();
-
-  static uint32_t lastPing = 0;
-  if (millis() - lastPing >= 60) {
-    lastPing = millis();
-    float cm;
-    if (readUltrasonicOnce(cm)) {
-      g_distance_cm = cm;       // only update on success
-    }
-  }
-
-  Serial.print("Distance: ");
-  Serial.println(g_distance_cm, 2);
-  // Trigger the ultrasonic pulse
-  /*digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);/*/
-
-  // Measure echo time
- 
-  
-
-=======
 
   //--- Ultrasonic Ping, Detection and Processing END ---//
   microSeconds = micros();
@@ -149,7 +115,6 @@ void loop() {
   Serial.print(distance_4);
   //--- Ultrasonic Ping, Detection and Processing END ---//
   
->>>>>>> d9106992d81f40d8e40a5c69f2c40ebbf2f8bcac:Testing Folder/IntegratedCodeEngg.ino
   // Blink LED if object < 20 cm
   /*if (distance < 20) {
     digitalWrite(motor_driver_in1, HIGH);
@@ -169,12 +134,8 @@ void loop() {
     digitalWrite(motor_driver_in2, LOW);
     digitalWrite(RED_WARNING_LIGHT, LOW);
     LED_STATE = LOW;
-  }/*/
+  }
 
-<<<<<<< HEAD:Testing Folder/newcode/IntegratedCodeEngg.ino
   //delay(50);//small delay for stability
-=======
-  //delay(50); //small delay for stability
->>>>>>> d9106992d81f40d8e40a5c69f2c40ebbf2f8bcac:Testing Folder/IntegratedCodeEngg.ino
 }
     

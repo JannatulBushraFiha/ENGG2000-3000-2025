@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <WiFi.h> 
 #include <WebServer.h>
-#include <PulseInput.h>
+
 
 //Some forward declarations so the files compiled even not in alphabetical order 
 void setupWiFi(); 
@@ -13,10 +13,7 @@ void handleWebServerClients();
 
 
 #define trigPin 22
-#define echoPin1 23
-#define echoPin2 4 //needs changing
-#define echoPin3 5 //needs changing
-#define echoPin4 6 //needs changing
+#define echoPin 23
 #define RED_WARNING_LIGHT 25 // LED pin
 #define motor_driver_in1 15 //motor spin "high"
 #define motor_driver_in2 2 //motor spin "low"
@@ -29,33 +26,12 @@ int LED_STATE = LOW;
 float duration, distance;
 
 void setup() {
-  //--- Ultrasonic Sensor variable setup ---//
-  const int echoReadDelay = 10;
-  unsigned long microSeconds;
-  unsigned long timeSincePing;
-  int USstage = 1;
-  float distance_1, distance_2, distance_3, distance_4;
-  
-  volatile uint16_t duration_1;
-  volatile uint16_t duration_2;
-  volatile uint16_t duration_3;
-  volatile uint16_t duration_4;
-
   pinMode(trigPin, OUTPUT);
-  pinMode(echoPin1, INPUT);
-  pinMode(echoPin2, INPUT);
-  pinMode(echoPin3, INPUT);
-  pinMode(echoPin4, INPUT);
-
-  attachPulseInput(echoPin1, duration_1);
-  attachPulseInput(echoPin2, duration_2);
-  attachPulseInput(echoPin3, duration_3);
-  attachPulseInput(echoPin4, duration_4);
-  //--- Ultrasonic Sensor Setup End ---//
-  
+  pinMode(echoPin, INPUT);
   pinMode(RED_WARNING_LIGHT, OUTPUT);
   pinMode(motor_driver_in1, OUTPUT);
   pinMode(motor_driver_in2, OUTPUT);
+
   //Serial.begin(9600);
   //set the monitor to 115200 instead - ESP32's default system speed 
   Serial.begin(115200);
@@ -67,43 +43,23 @@ void setup() {
 }
 
 void loop() {
+  motorFunctionLoop();
   //add this otherwise the website wouldn't load. 
   handleWebServerClients();
-  motorFunctionLoop();
+  // Trigger the ultrasonic pulse
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
 
-  //--- Ultrasonic Ping, Detection and Processing END ---//
-  microSeconds = micros();
-  
-  if (USstage == 1) {
-    digitalWrite(trigPin,HIGH);
-    timeSincePing = microSeconds;
-    USstage++;
-  };
-  
-  if (USstage == 2 && (microSeconds - timeSincePing) >= echoReadDelay) {
-    digitalWrite(trigPin, LOW);
-    USstage++;
-  };
-  
-  if (USstage == 3 && (microSeconds - timeSincePing) >= 200000) {
-    USstage = 1;
-  }
-
-  distance_1 = (duration_1*.0343)/2;
-  distance_2 = (duration_2*.0343)/2;
-  distance_3 = (duration_3*.0343)/2;
-  distance_4 = (duration_4*.0343)/2;
+  // Measure echo time
+  duration = pulseIn(echoPin, HIGH);
+  distance = (duration * 0.0343) / 2; // distance in cm
 
   Serial.print("Distance: ");
-  Serial.print(distance_1);
-  Serial.print("  ");
-  Serial.print(distance_2);
-  Serial.print("  ");
-  Serial.println(distance_3);
-  Serial.print("  ");
-  Serial.print(distance_4);
-  //--- Ultrasonic Ping, Detection and Processing END ---//
-  
+  Serial.println(distance);
+
   // Blink LED if object < 20 cm
   if (distance < 20) {
     digitalWrite(motor_driver_in1, HIGH);
@@ -125,6 +81,5 @@ void loop() {
     LED_STATE = LOW;
   }
 
-  //delay(50); //small delay for stability
+  //delay(50);//small delay for stability
 }
-    

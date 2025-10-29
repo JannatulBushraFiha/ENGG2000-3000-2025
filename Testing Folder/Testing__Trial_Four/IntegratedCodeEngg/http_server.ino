@@ -345,6 +345,9 @@ void setupWebServer()
     g_cmd_auto   = CMD_IDLE; // neuter auto
     server.send(200, "application/json", "{\"mode\":\"manual\"}"); });
 
+  server.on("api/status", HTTP_GET)
+
+
   server.onNotFound([]()
                     { server.send(404, "text/plain", "Not found"); });
 

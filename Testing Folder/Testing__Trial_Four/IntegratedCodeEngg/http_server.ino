@@ -345,7 +345,41 @@ void setupWebServer()
     g_cmd_auto   = CMD_IDLE; // neuter auto
     server.send(200, "application/json", "{\"mode\":\"manual\"}"); });
 
-  server.on("api/status", HTTP_GET)
+  server.on("api/status", HTTP_GET, []() {
+    String status = "unknown";
+    String trafficLight = "red"; 
+
+    //Recommended to add a timer as a tracking condition
+    //check if emergency stop is active. 
+    if (g_emergency){
+      status = "halt"; 
+      trafficLight = "red"; 
+    }
+    //check if the bridge is currently executing a command, opening or closing in both auto and manual
+    //opening 
+    else if (g_cmd_manual == CMD_OPEN || g_cmd_auto == CMD_OPEN){
+      status = "moving"; 
+      trafficLight = "red"; 
+    } 
+    //closing
+    else if (g_cmd_manual == CMD_CLOSE || g_cmd_auto = CMD_CLOSE){
+      status = "moving";
+      trafficLight = "red";
+    }
+    else{
+      if (g_distance_cm > 0 && g_distance_cm < 22.0f){
+        status = "up";
+        trafficLight = "red"; 
+      }
+      else {
+        status = "down"; 
+        trafficLight = "green";
+      }
+    }
+
+    String json = "{\"bridge\":\"" + status + "\",\"traffic\":\"" + trafficLight + "\"}";
+    server.send(200, "application/json", json);
+  });
 
 
   server.onNotFound([]()

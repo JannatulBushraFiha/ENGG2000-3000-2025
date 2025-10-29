@@ -216,10 +216,26 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
   const btnStop  = document.getElementById("stopButton");
   const btnManualMode = document.getElementById("btnManualMode");
   const btnAutoMode   = document.getElementById("btnAutoMode");
+  const trafficStatusDot = document.getElementById("trafficStatus");
 
   // Functions
   function setBridgeStatus(newState) {
     bridgeStatusElement.textContent = newState;
+
+    //Update traffic light based on bridge state 
+    if(newState === BridgeState.UP){
+      //Bridge up, no traffic, red dot
+      trafficStatusDot.className = "dot red"; 
+    } else if (newState === BridgeState.DOWN){
+      //Bridge down, traffic, green dot
+      trafficStatusDot.className = "dot green"; 
+    } else if (newState === BridgeState.HALT){
+      //Bridge halt, no traffic, red dot
+      trafficStatusDot.className = "dot red"; 
+    } else if (newState === BridgeState.MOVING){
+      //Bridge moving, no traffic, red dot
+      trafficStatusDot.className = "dot red"; 
+    }
   }
 
   function setModeUI(mode) {
@@ -239,10 +255,28 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
       .catch(error => console.error('Error:', error));
   }
 
+
+
   // Button Handlers
-  btnOpen.addEventListener("click", () => sendCommand("/api/open"));
-  btnClose.addEventListener("click", () => sendCommand("/api/close"));
-  btnStop.addEventListener("click", () => sendCommand("/api/stop"));
+  btnOpen.addEventListener("click", () => {
+    sendCommand("/api/open").then(()=> {
+      setBridgeStatus(BridgeState.MOVING);
+    }); 
+  }); 
+
+  btnOpen.addEventListener("click", () => {
+    sendCommand("/api/close").then(()=> {
+      setBridgeStatus(BridgeState.MOVING);
+    }); 
+  }); 
+
+  btnOpen.addEventListener("click", () => {
+    sendCommand("/api/stop").then(()=> {
+      setBridgeStatus(BridgeState.HALT);
+    }); 
+  }); 
+
+
 
   // Mode Handlers
   btnManualMode.addEventListener("click", () => {
@@ -253,6 +287,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
   });
 
   // Default to Manual
+  setBridgeStatus(BridgeState.DOWN);
   setModeUI('manual');
   </script>
 </body>
@@ -261,64 +296,64 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
 
 // ---------------- WebServer setup ----------------
 
-void setupWebServer() {
+void setupWebServer()
+{
   Serial.println("http_server::setupWebServer() start");
 
-  server.on("/", HTTP_GET, []() {
-    server.send_P(200, "text/html", HTML_PAGE);
-  });
+  server.on("/", HTTP_GET, []()
+            { server.send_P(200, "text/html", HTML_PAGE); });
 
   // Manual control endpoints
-  server.on("/api/open", HTTP_POST, []() {
+  server.on("/api/open", HTTP_POST, []()
+            {
     Serial.println("[HTTP] /api/open");
     g_mode = MODE_MANUAL;
     g_cmd_manual  = CMD_OPEN;
-    server.send(200, "application/json", "{\"status\":\"opening\"}");
-  });
+    server.send(200, "application/json", "{\"status\":\"opening\"}"); });
 
-  server.on("/api/close", HTTP_POST, []() {
+  server.on("/api/close", HTTP_POST, []()
+            {
     Serial.println("[HTTP] /api/close");
     g_mode = MODE_MANUAL;
     g_cmd_manual = CMD_CLOSE;
-    server.send(200, "application/json", "{\"status\":\"closing\"}");
-  });
+    server.send(200, "application/json", "{\"status\":\"closing\"}"); });
 
-  server.on("/api/stop", HTTP_POST, []() {
+  server.on("/api/stop", HTTP_POST, []()
+            {
     g_emergency  = true;         // <-- latch
     g_cmd_manual  = CMD_STOP;
     g_cmd_auto   = CMD_STOP;
 
     
-    server.send(200, "application/json", "{\"status\":\"stopping\"}");
-  });
+    server.send(200, "application/json", "{\"status\":\"stopping\"}"); });
 
   // Mode switching
-  server.on("/api/mode/auto", HTTP_POST, []() {
+  server.on("/api/mode/auto", HTTP_POST, []()
+            {
     g_emergency  = false;     // auto-clear emergency
     g_mode = MODE_AUTO;
     g_cmd_manual = CMD_IDLE;
     g_cmd_auto   = CMD_IDLE;
 
-    server.send(200, "application/json", "{\"mode\":\"auto\"}");
-  });
+    server.send(200, "application/json", "{\"mode\":\"auto\"}"); });
 
-  server.on("/api/mode/manual", HTTP_POST, []() {
+  server.on("/api/mode/manual", HTTP_POST, []()
+            {
     g_emergency  = false;     // auto-clear emergency
     g_mode = MODE_MANUAL;
     g_cmd_manual = CMD_IDLE; // start safe
     g_cmd_auto   = CMD_IDLE; // neuter auto
-    server.send(200, "application/json", "{\"mode\":\"manual\"}");
-  });
+    server.send(200, "application/json", "{\"mode\":\"manual\"}"); });
 
-  server.onNotFound([]() {
-    server.send(404, "text/plain", "Not found");
-  });
+  server.onNotFound([]()
+                    { server.send(404, "text/plain", "Not found"); });
 
   server.begin();
   Serial.println("http_server::setupWebServer() end");
 }
 
-void handleWebServerClients() {
+void handleWebServerClients()
+{
   server.handleClient();
 }
 

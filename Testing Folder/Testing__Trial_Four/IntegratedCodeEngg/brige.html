@@ -2,26 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bridge Control MVP</title>
   <style>
     body {
       font-family: sans-serif;
       color: white;
       padding: 1.25rem;
-      background:whitesmoke;
+      background: whitesmoke;
     }
     .box {
-      border:  0.5rem solid grey;
+      border: 0.5rem solid grey;
       padding: 1rem;
       margin-bottom: 1.25rem;
       background: #2d3748;
     }
-
-
-
-
-
-    
     .title {
       font-weight: bold;
       margin-bottom: 0.75rem;
@@ -45,52 +40,24 @@
       display: flex;
       justify-content: space-between;
     }
-    .status.traffic {
+    .status.traffic, .status.marine {
       flex: 4;
       margin: 0 0.625rem;
       border: 0.00625rem solid grey;
       padding: 0.625rem;
       text-align: center;
+      background: #4d5563;
     }
-    .status.marine {
-      flex: 4;
-      margin: 0 0.625rem;
-      border: 0.00625rem solid grey;
-      padding: 0.625rem;
-      text-align: center;
-    }
-    .status.traffic { background: #4d5563; }
-    .status.marine { background: #4d5563; }
     .dot {
-        display: inline-block;
-        width: 0.75rem;
-        height: 0.75rem;
-        margin-left: 0.5rem;
-        border-radius: 80%;
+      display: inline-block;
+      width: 0.75rem;
+      height: 0.75rem;
+      margin-left: 0.5rem;
+      border-radius: 80%;
     }
-    .dot.red {
-        background: #ff0000;
-        box-shadow: 0 0 0.375rem #ff0000;
-    }
-    .dot.green {
-        background: #00ff00;
-        box-shadow: 0 0 0.375rem #00ff00;
-    }
-    .dot.white {
-        background: white;
-        box-shadow: 0 0 0.375rem grey;
-    }
-
-
-
-
-
-
-
-
-
-
-
+    .dot.red    { background: #ff0000; box-shadow: 0 0 0.375rem #ff0000; }
+    .dot.green  { background: #00ff00; box-shadow: 0 0 0.375rem #00ff00; }
+    .dot.white  { background: white;   box-shadow: 0 0 0.375rem grey; }
 
     .bottom-row {
       display: flex;
@@ -104,27 +71,20 @@
       padding: 1rem;
       margin-bottom: 1rem;
       text-align: center;
+      background: #4d5563;
     }
-    .system-mode{
+    .system-mode {
       border: 0.125rem solid grey;
       background: #4d5563;
-
+      padding: 0.4rem;
+      text-align: center;
     }
-    .substatus.detected { background:#4d5563; }
-    .substatus.passing { background: #4d5563; }
-    .substatus.departed { background:#4d5563; }
-
-
-
-
-
-
-
-
-
-
-
-
+    .mode-row {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      margin-top: .5rem;
+    }
     .button {
       display: block;
       width: 100%;
@@ -137,30 +97,9 @@
       cursor: pointer;
     }
     .button.green { background: #2ecc71; }
-    .button.green:active{
-        background: #a8f5c2; 
-    }
+    .button.green:active { background: #a8f5c2; }
     .button.red { background: #e74c3c; font-size: 1.25rem; }
-    .button.red:active{
-        background: #f8a8a8; 
-    }
-    .system-mode {
-      border: 0.0625rem solid grey;
-      padding: 0.4rem;
-      text-align: center;
-    }
-    .mode-options{
-      display:flex;
-      justify-content: center;
-      align-items: center;
-      gap:3.5rem
-    }
-    .mode-row{
-      display:flex;
-      gap:14px;
-      justify-content:center;
-      margin-top:.5rem;
-    }
+    .button.red:active { background: #f8a8a8; }
     .mode-btn {
       width: 6.25rem;
       border: none;
@@ -185,12 +124,6 @@
   </style>
 </head>
 
-
-
-
-
-
-
 <body>
   <div class="container">
 
@@ -200,12 +133,12 @@
       <div class="bridge-status-inner" id="bridgeStatus">Bridge Up</div>
       <div class="status-row">
         <div class="status traffic">
-            Traffic Status
-            <span class = "dot red" id="trafficStatus"></span>
+          Traffic Status
+          <span class="dot red" id="trafficStatus"></span>
         </div>
         <div class="status marine">
-            Marine Status
-            <span class = "dot white" id="marineStatus"></span>
+          Marine Status
+          <span class="dot white" id="marineStatus"></span>
         </div>
       </div>
     </div>
@@ -215,17 +148,17 @@
       <!-- Marine Status -->
       <div class="box marine">
         <div class="title">Marine Status</div>
-        <div class="substatus detected" id="shipDetected">
-            Ship Detected
-            <span class = "dot red" id="shipDetectedLight"></span>
+        <div class="substatus" id="shipDetected">
+          Ship Detected
+          <span class="dot red" id="shipDetectedLight"></span>
         </div>
-        <div class="substatus passing" id="shipPassing">
-            Ship Passing
-            <span class = "dot red" id="shipPassingLight"></span>
+        <div class="substatus" id="shipPassing">
+          Ship Passing
+          <span class="dot red" id="shipPassingLight"></span>
         </div>
-        <div class="substatus departed" id="shipDeparted">
-            Ship Departed
-            <span class = "dot green" id="shipDepartedLight"></span>
+        <div class="substatus" id="shipDeparted">
+          Ship Departed
+          <span class="dot green" id="shipDepartedLight"></span>
         </div>
       </div>
 
@@ -234,37 +167,20 @@
         <div class="title">Manual Control</div>
         <button class="button green" id="openBridge">Open Bridge</button>
         <button class="button green" id="closeBridge">Close Bridge</button>
-        <button class="button red" id="stopButton"> EMERGENCY STOP</button>
+        <button class="button red" id="stopButton">EMERGENCY STOP</button>
         <div class="system-mode">
-            System Mode
-            <div class="mode-row">
-                <button id = "btnManual" class="mode-btn">Manual</button>
-                <button id = "btnAuto" class="mode-btn">Auto</button>
-            </div>
+          System Mode
+          <div class="mode-row">
+            <button id="btnManualMode" class="mode-btn">Manual</button>
+            <button id="btnAutoMode" class="mode-btn">Auto</button>
+          </div>
         </div>
       </div>
     </div>
-
   </div>
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   <script>
-  // Bridge States 
-  // Making objects immutable 
+  // Bridge States
   const BridgeState = Object.freeze({
     UP: "Bridge Up",
     DOWN: "Bridge Down",
@@ -272,43 +188,86 @@
     HALT: "Bridge Halt"
   });
 
-  // Elements 
+  // Elements
   const bridgeStatusElement = document.getElementById("bridgeStatus");
   const btnOpen  = document.getElementById("openBridge");
   const btnClose = document.getElementById("closeBridge");
   const btnStop  = document.getElementById("stopButton");
-  const shipDetectedLight = document.getElementById("shipDetectedLight"); 
-  const shipPassingLight = document.getElementById("shipPassingLight"); 
-  
+  const btnManualMode = document.getElementById("btnManualMode");
+  const btnAutoMode   = document.getElementById("btnAutoMode");
+  const trafficStatusDot = document.getElementById("trafficStatus");
 
-  // Functions 
-
-  //Making UI Aligns with the Mutable State 
+  // Functions
   function setBridgeStatus(newState) {
     bridgeStatusElement.textContent = newState;
+
+    //Update traffic light based on bridge state 
+    if(newState === BridgeState.UP){
+      //Bridge up, no traffic, red dot
+      trafficStatusDot.className = "dot red"; 
+    } else if (newState === BridgeState.DOWN){
+      //Bridge down, traffic, green dot
+      trafficStatusDot.className = "dot green"; 
+    } else if (newState === BridgeState.HALT){
+      //Bridge halt, no traffic, red dot
+      trafficStatusDot.className = "dot red"; 
+    } else if (newState === BridgeState.MOVING){
+      //Bridge moving, no traffic, red dot
+      trafficStatusDot.className = "dot red"; 
+    }
   }
 
-  // Button handlers 
-  btnOpen.addEventListener("click", () => {
-    sendCommand("/api/open");
-  });
+  function setModeUI(mode) {
+    const isManual = (mode === 'manual');
+    btnManualMode.classList.toggle('active', isManual);
+    btnAutoMode.classList.toggle('active', !isManual);
 
-  btnClose.addEventListener("click", () => {
-    sendCommand("/api/close");
-  });
-
-  btnStop.addEventListener("click", () => {
-    sendCommand("/api/stop");
-  });
+    // Disable Open/Close in AUTO
+    btnOpen.disabled  = !isManual;
+    btnClose.disabled = !isManual;
+  }
 
   function sendCommand(endpoint) {
-    fetch(endpoint, { method: 'POST' })
+    return fetch(endpoint, { method: 'POST' })
       .then(response => response.json())
       .then(data => console.log(data))
       .catch(error => console.error('Error:', error));
   }
 
+
+
+  // Button Handlers
+  btnOpen.addEventListener("click", () => {
+    sendCommand("/api/open").then(()=> {
+      setBridgeStatus(BridgeState.MOVING);
+    }); 
+  }); 
+
+  btnClose.addEventListener("click", () => {
+    sendCommand("/api/close").then(()=> {
+      setBridgeStatus(BridgeState.MOVING);
+    }); 
+  }); 
+
+  btnStop.addEventListener("click", () => {
+    sendCommand("/api/stop").then(()=> {
+      setBridgeStatus(BridgeState.HALT);
+    }); 
+  }); 
+
+
+
+  // Mode Handlers
+  btnManualMode.addEventListener("click", () => {
+    sendCommand('/api/mode/manual').then(() => setModeUI('manual'));
+  });
+  btnAutoMode.addEventListener("click", () => {
+    sendCommand('/api/mode/auto').then(() => setModeUI('auto'));
+  });
+
+  // Default to Manual
+  setBridgeStatus(BridgeState.DOWN);
+  setModeUI('manual');
   </script>
 </body>
-
 </html>

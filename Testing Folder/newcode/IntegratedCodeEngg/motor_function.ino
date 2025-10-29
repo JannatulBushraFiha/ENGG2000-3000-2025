@@ -10,7 +10,6 @@ void motor_coast();
 
 
 void setupMotorFunction() {
-  // Removed: setupUS();   // ❌ wrong name
   // Nothing needed here for ultrasonic; it is initialized by initUltrasonic() in main
   pinMode(motor_driver_in1, OUTPUT);
   pinMode(motor_driver_in2, OUTPUT);

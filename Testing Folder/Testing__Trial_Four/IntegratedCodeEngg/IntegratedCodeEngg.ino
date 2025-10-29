@@ -11,8 +11,11 @@
 #define ECHO_PIN3       19
 #define ECHO_PIN4       18
 #define RED_WARNING_LED 25
+#define ALTITUDE_LIGHTS 5
 #define MOTOR_IN1       15
 #define MOTOR_IN2        2
+#define LDR_PIN         27
+#define NIGHT_LIGHTS    17
 
 // ---------------- App state
 SystemMode g_mode = MODE_AUTO;             // manual is default
@@ -32,6 +35,12 @@ void setupWiFi();
 void setupWebServer();
 void setupMotorFunction();
 void motorFunctionLoop();
+void setupNightLights();
+void nightLightsLoop();
+void setupWarningLights();
+void warningLightsLoop ();
+void setupAltitudeLight();
+void altitudeLightLoop();
 void handleWebServerClients();
 
 // ===== AUTO controller: computes g_cmd_auto only (never touches manual) =====
@@ -93,6 +102,20 @@ static bool readUltrasonicOnce(float &d1, float &d2, float &d3, float &d4) {
   return (t1 || t2 || t3 || t4);
 }
 
+void blinkEmergencyLeds() {
+  static unsigned long lastBlink = 0;
+  static bool state = false;
+
+  if (millis() - lastBlink >= 500) { // blink interval
+    lastBlink = millis();
+    state = !state;
+    digitalWrite(NIGHT_LIGHTS, state ? HIGH : LOW);
+    digitalWrite(RED_WARNING_LED, state ? HIGH : LOW);
+    digitalWrite(ALTITUDE_LIGHTS, state ? HIGH : LOW);
+  }
+}
+
+
 void setup() {
   Serial.begin(115200);
 
@@ -105,6 +128,9 @@ void setup() {
   setupWiFi();
   setupWebServer();
   setupMotorFunction();
+  setupNightLights();
+  setupWarningLights();
+  setupAltitudeLight();
 }
 
 void loop() {
@@ -136,6 +162,13 @@ void loop() {
 
   // Single place that drives the H-bridge (picks manual OR auto)
   motorFunctionLoop();
+  if (g_emergency) {
+  blinkEmergencyLeds();  // all LEDs blink
+} else {
+  nightLightsLoop();
+  warningLightsLoop();
+  altitudeLightLoop();
+}
 
   // small pause to reduce serial spam / CPU (non-blocking is better, but fine)
   delay(10);

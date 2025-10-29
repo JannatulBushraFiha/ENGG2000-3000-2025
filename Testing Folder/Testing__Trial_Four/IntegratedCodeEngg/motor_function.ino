@@ -23,12 +23,11 @@ static inline void driveClose() { digitalWrite(MOTOR_IN1, LOW);  digitalWrite(MO
 static inline void driveStop()  { digitalWrite(MOTOR_IN1, LOW);  digitalWrite(MOTOR_IN2, LOW);  }
 
 void motorFunctionLoop() {
-    static SystemMode lastMode = g_mode;
 
-    if (g_mode != lastMode) {
-    lastMode = g_mode;
-    driveStop();                  // stop once on mode switch
-    g_cmd_auto = CMD_IDLE;        // clear any auto intent
+
+  if (g_emergency) {
+    driveStop();
+    return;
   }
 
 

@@ -18,6 +18,8 @@
 SystemMode g_mode = MODE_AUTO;             // manual is default
 volatile BridgeCmd  g_cmd_manual = CMD_IDLE; // set by web UI
 volatile BridgeCmd  g_cmd_auto   = CMD_IDLE; // set by autoController()
+volatile bool      g_emergency  = false;   // <-- NEW
+
 
 unsigned long previousMillis = 0;
 const unsigned long BLINK_INTERVAL_MS = 500;

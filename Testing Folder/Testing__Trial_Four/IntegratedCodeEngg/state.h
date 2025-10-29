@@ -11,4 +11,5 @@ extern SystemMode g_mode;
 // Distance shared across modules (DEFINED in main)
 extern float g_distance_cm;
 extern volatile BridgeCmd  g_cmd_manual;  // set by UI handlers
-extern volatile BridgeCmd  g_cmd_auto; 
+extern volatile BridgeCmd  g_cmd_auto;
+extern volatile bool g_emergency;   // <-- NEW

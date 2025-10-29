@@ -284,18 +284,26 @@ void setupWebServer() {
   });
 
   server.on("/api/stop", HTTP_POST, []() {
+    g_emergency  = true;         // <-- latch
     g_cmd_manual  = CMD_STOP;
+    g_cmd_auto   = CMD_STOP;
+
+    
     server.send(200, "application/json", "{\"status\":\"stopping\"}");
   });
 
   // Mode switching
   server.on("/api/mode/auto", HTTP_POST, []() {
+    g_emergency  = false;     // auto-clear emergency
     g_mode = MODE_AUTO;
     g_cmd_manual = CMD_IDLE;
+    g_cmd_auto   = CMD_IDLE;
+
     server.send(200, "application/json", "{\"mode\":\"auto\"}");
   });
 
   server.on("/api/mode/manual", HTTP_POST, []() {
+    g_emergency  = false;     // auto-clear emergency
     g_mode = MODE_MANUAL;
     g_cmd_manual = CMD_IDLE; // start safe
     g_cmd_auto   = CMD_IDLE; // neuter auto

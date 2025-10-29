@@ -188,6 +188,10 @@
     HALT: "Bridge Halt"
   });
 
+  //Hard-coded moving time for 3 seconds
+  //Change when the timer variable is made and updated
+  const MOVING_DURATION_MS = 2000; 
+
   // Elements
   const bridgeStatusElement = document.getElementById("bridgeStatus");
   const btnOpen  = document.getElementById("openBridge");
@@ -240,12 +244,20 @@
   btnOpen.addEventListener("click", () => {
     sendCommand("/api/open").then(()=> {
       setBridgeStatus(BridgeState.MOVING);
+      //hard-coded moving time after "open bridge", change later
+      setTimeout(() => {
+        setBridgeStatus(BridgeState.UP);
+      }, MOVING_DURATION_MS);
     }); 
   }); 
 
   btnClose.addEventListener("click", () => {
     sendCommand("/api/close").then(()=> {
       setBridgeStatus(BridgeState.MOVING);
+      //hard-coded moving time after "close bridge", change later 
+      setTimeout(() => {
+        setBridgeStatus(BridgeState.DOWN);
+      }, MOVING_DURATION_MS);
     }); 
   }); 
 

@@ -44,8 +44,4 @@ void setupWiFi() {
 
     //Serial.println("ESP32 Access Point Started!");
     //Serial.println(apSSID);
-    //Serial.print("Password: ");
-    //Serial.println(apPassword);
-    //Serial.print("AP IP address: ");
-    //Serial.println(IP);
-
+    //Serial.print("Password: 

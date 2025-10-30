@@ -135,6 +135,20 @@
     .flashing-element {
       animation: blink-animation 0.5s infinite; 
     }
+    @keyframes blink-text{
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+    .flashing-element-text {
+      animation: blink-text 1.35s infinite; 
+    }
   </style>
 </head>
 
@@ -144,7 +158,7 @@
     <!-- Bridge Status Panel -->
     <div class="box bridge-status">
       <div class="title">Bridge Control System</div>
-      <div class="bridge-status-inner" id="bridgeStatus">Bridge Up</div>
+      <div class="bridge-status-inner"><span id="bridgeStatus">Bridge Up</span></div>
       <div class="status-row">
         <div class="status traffic">
           Traffic Status
@@ -220,6 +234,7 @@
     bridgeStatusElement.textContent = newState;
     //Don't flash until bridge starts moving
     trafficStatusDot.classList.remove("flashing-element");
+    bridgeStatusElement.classList.remove("flashing-element-text");
 
     //Update traffic light based on bridge state 
     if(newState === BridgeState.UP){
@@ -236,6 +251,7 @@
       trafficStatusDot.className = "dot red"; 
       //Start flashing while moving
       trafficStatusDot.classList.add("flashing-element");
+      bridgeStatusElement.classList.add("flashing-element-text");
     }
   }
 

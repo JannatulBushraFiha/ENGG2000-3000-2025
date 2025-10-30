@@ -142,6 +142,34 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
       box-shadow: 0 0 16px rgba(0, 0, 0, 0.3);
       background: #e5e5e5;
     }
+    @keyframes blink-animation{
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+    .flashing-element {
+      animation: blink-animation 0.5s infinite; 
+    }
+    @keyframes blink-text{
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+    .flashing-element-text {
+      animation: blink-text 1.35s infinite; 
+    }
   </style>
 </head>
 
@@ -151,7 +179,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     <!-- Bridge Status Panel -->
     <div class="box bridge-status">
       <div class="title">Bridge Control System</div>
-      <div class="bridge-status-inner" id="bridgeStatus">Bridge Up</div>
+      <div class="bridge-status-inner"><span id="bridgeStatus">Bridge Up</span></div>
       <div class="status-row">
         <div class="status traffic">
           Traffic Status
@@ -209,6 +237,10 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     HALT: "Bridge Halt"
   });
 
+  //Hard-coded moving time for 4 seconds
+  //Change when the timer variable is made and updated
+  const MOVING_DURATION_MS = 4000; 
+
   // Elements
   const bridgeStatusElement = document.getElementById("bridgeStatus");
   const btnOpen  = document.getElementById("openBridge");
@@ -217,24 +249,36 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
   const btnManualMode = document.getElementById("btnManualMode");
   const btnAutoMode   = document.getElementById("btnAutoMode");
   const trafficStatusDot = document.getElementById("trafficStatus");
+  const marineStatusDot = document.getElementById("marineStatus");
+
 
   // Functions
   function setBridgeStatus(newState) {
     bridgeStatusElement.textContent = newState;
+    //Don't flash until bridge starts moving
+    trafficStatusDot.classList.remove("flashing-element");
+    bridgeStatusElement.classList.remove("flashing-element-text");
 
     //Update traffic light based on bridge state 
     if(newState === BridgeState.UP){
-      //Bridge up, no traffic, red dot
+      //Bridge up, no traffic, traffic red dot, marine safe to go
       trafficStatusDot.className = "dot red"; 
+      marineStatusDot.className = "dot green";
     } else if (newState === BridgeState.DOWN){
-      //Bridge down, traffic, green dot
+      //Bridge down, traffic, traffic green dot, marine not safe to go
       trafficStatusDot.className = "dot green"; 
+      marineStatusDot.className = "dot red";
     } else if (newState === BridgeState.HALT){
-      //Bridge halt, no traffic, red dot
+      //Bridge halt, no traffic & marine, traffic red dot, marine red dot
       trafficStatusDot.className = "dot red"; 
+      marineStatusDot.className = "dot red";
     } else if (newState === BridgeState.MOVING){
-      //Bridge moving, no traffic, red dot
+      //Bridge moving, no traffic & marine, traffic & marine red dot
       trafficStatusDot.className = "dot red"; 
+      marineStatusDot.className = "dot red";
+      //Start flashing while moving
+      trafficStatusDot.classList.add("flashing-element");
+      bridgeStatusElement.classList.add("flashing-element-text");
     }
   }
 
@@ -261,16 +305,24 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
   btnOpen.addEventListener("click", () => {
     sendCommand("/api/open").then(()=> {
       setBridgeStatus(BridgeState.MOVING);
+      //hard-coded moving time after "open bridge", change later
+      setTimeout(() => {
+        setBridgeStatus(BridgeState.UP);
+      }, MOVING_DURATION_MS);
     }); 
   }); 
 
-  btnOpen.addEventListener("click", () => {
+  btnClose.addEventListener("click", () => {
     sendCommand("/api/close").then(()=> {
       setBridgeStatus(BridgeState.MOVING);
+      //hard-coded moving time after "close bridge", change later 
+      setTimeout(() => {
+        setBridgeStatus(BridgeState.DOWN);
+      }, MOVING_DURATION_MS);
     }); 
   }); 
 
-  btnOpen.addEventListener("click", () => {
+  btnStop.addEventListener("click", () => {
     sendCommand("/api/stop").then(()=> {
       setBridgeStatus(BridgeState.HALT);
     }); 

@@ -228,6 +228,8 @@
   const btnManualMode = document.getElementById("btnManualMode");
   const btnAutoMode   = document.getElementById("btnAutoMode");
   const trafficStatusDot = document.getElementById("trafficStatus");
+  const marineStatusDot = document.getElementById("marineStatus");
+
 
   // Functions
   function setBridgeStatus(newState) {
@@ -238,17 +240,21 @@
 
     //Update traffic light based on bridge state 
     if(newState === BridgeState.UP){
-      //Bridge up, no traffic, red dot
+      //Bridge up, no traffic, traffic red dot, marine safe to go
       trafficStatusDot.className = "dot red"; 
+      marineStatusDot.className = "dot green";
     } else if (newState === BridgeState.DOWN){
-      //Bridge down, traffic, green dot
+      //Bridge down, traffic, traffic green dot, marine not safe to go
       trafficStatusDot.className = "dot green"; 
+      marineStatusDot.className = "dot red";
     } else if (newState === BridgeState.HALT){
-      //Bridge halt, no traffic, red dot
+      //Bridge halt, no traffic & marine, traffic red dot, marine red dot
       trafficStatusDot.className = "dot red"; 
+      marineStatusDot.className = "dot red";
     } else if (newState === BridgeState.MOVING){
-      //Bridge moving, no traffic, red dot
+      //Bridge moving, no traffic & marine, traffic & marine red dot
       trafficStatusDot.className = "dot red"; 
+      marineStatusDot.className = "dot red";
       //Start flashing while moving
       trafficStatusDot.classList.add("flashing-element");
       bridgeStatusElement.classList.add("flashing-element-text");

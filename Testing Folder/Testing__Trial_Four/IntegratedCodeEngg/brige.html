@@ -121,6 +121,20 @@
       box-shadow: 0 0 16px rgba(0, 0, 0, 0.3);
       background: #e5e5e5;
     }
+    @keyframes blink-animation{
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+    .flashing-element {
+      animation: blink-animation 0.5s infinite; 
+    }
   </style>
 </head>
 
@@ -188,9 +202,9 @@
     HALT: "Bridge Halt"
   });
 
-  //Hard-coded moving time for 3 seconds
+  //Hard-coded moving time for 4 seconds
   //Change when the timer variable is made and updated
-  const MOVING_DURATION_MS = 2000; 
+  const MOVING_DURATION_MS = 4000; 
 
   // Elements
   const bridgeStatusElement = document.getElementById("bridgeStatus");
@@ -204,6 +218,8 @@
   // Functions
   function setBridgeStatus(newState) {
     bridgeStatusElement.textContent = newState;
+    //Don't flash until bridge starts moving
+    trafficStatusDot.classList.remove("flashing-element");
 
     //Update traffic light based on bridge state 
     if(newState === BridgeState.UP){
@@ -218,6 +234,8 @@
     } else if (newState === BridgeState.MOVING){
       //Bridge moving, no traffic, red dot
       trafficStatusDot.className = "dot red"; 
+      //Start flashing while moving
+      trafficStatusDot.classList.add("flashing-element");
     }
   }
 

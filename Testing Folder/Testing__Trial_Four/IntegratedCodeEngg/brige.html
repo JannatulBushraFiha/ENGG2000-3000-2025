@@ -149,6 +149,26 @@
     .flashing-element-text {
       animation: blink-text 1.35s infinite; 
     }
+    @keyframes blink-animation-ship{
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+    .flashing-element-shipdetected{
+      animation: blink-animation-ship 0.5s infinite;
+    }
+    .flashing-element-shippassing{
+      animation: blink-animation-ship 0.5s infinite;
+    }
+    .flashing-element-shipdeparted{
+      animation: blink-animation-ship 0.5s infinite;
+    }
   </style>
 </head>
 
@@ -174,8 +194,8 @@
     <!-- Bottom row -->
     <div class="bottom-row">
       <!-- Marine Status -->
-      <div class="box marine">
-        <div class="title">Marine Status</div>
+      <div class="box ship">
+        <div class="title">Ship Status</div>
         <div class="substatus" id="shipDetected">
           Ship Detected
           <span class="dot red" id="shipDetectedLight"></span>
@@ -215,6 +235,11 @@
     MOVING: "Bridge Moving",
     HALT: "Bridge Halt"
   });
+  const MarineState = Object.freeze({
+    DETECTED: "Ship Detected",
+    PASSING: "Ship Passing", 
+    DEPARTED: "Ship Departed"
+  }); 
 
   //Hard-coded moving time for 4 seconds
   //Change when the timer variable is made and updated
@@ -229,7 +254,9 @@
   const btnAutoMode   = document.getElementById("btnAutoMode");
   const trafficStatusDot = document.getElementById("trafficStatus");
   const marineStatusDot = document.getElementById("marineStatus");
-
+  const shipDetectedDot = document.getElementById("shipDetectedLight");
+  const shipPassingDot = document.getElementById("shipPassingLight");
+  const shipDepartedDot = document.getElementById("shipDepartedLight");
 
   // Functions
   function setBridgeStatus(newState) {
@@ -258,6 +285,26 @@
       //Start flashing while moving
       trafficStatusDot.classList.add("flashing-element");
       bridgeStatusElement.classList.add("flashing-element-text");
+    }
+  }
+
+  function setShipStatus(newState){
+    shipDetectedDot.className = "dot white"; 
+    shipPassingDot.className = "dot white";
+    shipDepartedDot.className = "dot white"; 
+    shipDetectedDot.classList.remove("flashing-element-shipdetected");
+    shipPassingDot.classList.remove("flashing-element-shippassing");
+    shipDepartedDot.classList.remove("flashing-element-shipdeparted");
+
+    if(newState === MarineState.DETECTED){
+      shipDetectedDot.className = "dot red";
+      shipDetectedDot.classList.add("flashing-element-shipdetected");
+    } else if (newState === MarineState.PASSING){
+      shipPassingDot.className = "dot red"; 
+      shipPassingDot.classList.add("flashing-element-shippassing");
+    } else if (newState === MarineState.DEPARTED){
+      shipDepartedDot.className = "dot green"; 
+      shipDepartedDot.classList.add("flashing-element-shipdeparted");
     }
   }
 

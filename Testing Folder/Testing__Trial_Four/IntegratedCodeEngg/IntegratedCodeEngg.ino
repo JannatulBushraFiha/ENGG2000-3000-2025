@@ -172,6 +172,20 @@ static void autoController(float distance_cm) {
 // Trigger and read all four sensors once; returns false if all time out
 
 
+void blinkEmergencyLeds() {
+  static unsigned long lastBlink = 0;
+  static bool state = false;
+
+  if (millis() - lastBlink >= 500) { // blink interval
+    lastBlink = millis();
+    state = !state;
+    digitalWrite(NIGHT_LIGHTS, state ? HIGH : LOW);
+    digitalWrite(RED_WARNING_LED, state ? HIGH : LOW);
+    digitalWrite(ALTITUDE_LIGHTS, state ? HIGH : LOW);
+  }
+}
+
+
 void setup() {
   Serial.begin(115200);
 
@@ -218,9 +232,13 @@ void loop() {
 
   // Single place that drives the H-bridge (picks manual OR auto)
   motorFunctionLoop();
+  if (g_emergency) {
+  blinkEmergencyLeds();  // all LEDs blink
+} else {
   nightLightsLoop();
   warningLightsLoop();
   altitudeLightLoop();
+}
 
   // small pause to reduce serial spam / CPU (non-blocking is better, but fine)
   

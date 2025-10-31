@@ -6,8 +6,12 @@
 //static const char* apPassword = "yq2m8q7ixmf53i5"; 
 //static const char* STA_SSID = "JannatulBushra's A15"; 
 //static const char* STA_PASSWORD = "yq2m8q7ixmf53i5"; 
-static const char* STA_SSID = "iPhone"; 
-static const char* STA_PASSWORD = "12345678$"; 
+//static const char* STA_SSID = "iPhone"; 
+//static const char* STA_PASSWORD = "12345678$"; 
+static const char* STA_SSID = "Harry's Z Fold7"; 
+static const char* STA_PASSWORD = "harry0606"; 
+
+
 
 
 

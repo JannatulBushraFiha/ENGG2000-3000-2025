@@ -17,5 +17,3 @@ extern volatile bool g_emergency;   // <-- NEW
 
 //Marine Status 
 extern volatile MarineStatus g_marine_status; 
-// Distance in cm at which the system registers a "DETECTED" event.
-const float OPEN_ON_CM = 19.0;

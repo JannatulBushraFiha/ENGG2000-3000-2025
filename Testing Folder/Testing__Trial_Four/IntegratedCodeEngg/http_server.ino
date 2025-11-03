@@ -271,7 +271,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
 
   //Hard-coded moving time for 4 seconds
   //Change when the timer variable is made and updated
-  const MOVING_DURATION_MS = 4000; 
+  const MOVING_DURATION_MS = 30000; 
 
   // Elements
   const bridgeStatusElement = document.getElementById("bridgeStatus");

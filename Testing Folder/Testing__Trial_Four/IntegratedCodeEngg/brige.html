@@ -296,6 +296,11 @@
     shipPassingDot.classList.remove("flashing-element-shippassing");
     shipDepartedDot.classList.remove("flashing-element-shipdeparted");
 
+    //handle CLEAR
+    if (!newState || newState === 'CLEAR'){
+      return; 
+    }
+
     if(newState === MarineState.DETECTED){
       shipDetectedDot.className = "dot red";
       shipDetectedDot.classList.add("flashing-element-shipdetected");
@@ -363,6 +368,47 @@
   btnAutoMode.addEventListener("click", () => {
     sendCommand('/api/mode/auto').then(() => setModeUI('auto'));
   });
+
+  //MAP API for Ship DETECTED/PASSING/DEPARTED/CLEAR 
+  function mapApiStatusToUI(s){
+    switch (s) {
+      case 'DETECTED': return MarineState.DETECTED;
+      case 'PASSING':  return MarineState.PASSING;
+      case 'DEPARTED': return MarineState.DEPARTED;
+      case 'CLEAR':    return 'CLEAR';
+      default:         return null;
+    }
+  }
+
+  async function refreshMarine(){
+    try {
+      const r = await fetch('/api/marine', { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+
+      // Update mode buttons if you like (AUTO disables Open/Close)
+      if (d.mode === 'AUTO') setModeUI('auto'); else if (d.mode === 'MANUAL') setModeUI('manual');
+
+      // Update the Ship Status lights
+      const uiState = mapApiStatusToUI(d.marine_status);
+      setShipStatus(uiState);
+
+      // Optional: color the small marine dot at top row
+      // Red when DETECTED/PASSING; green on CLEAR/DEPARTED
+      if (uiState === MarineState.DETECTED || uiState === MarineState.PASSING) {
+        marineStatusDot.className = "dot red";
+      } else {
+        marineStatusDot.className = "dot green";
+      }
+    } catch (e) {
+      // On error, leave existing UI as-is or show a neutral state
+      console.warn('refreshMarine failed:', e);
+    }
+  }
+
+  // Poll every 250 ms
+  setInterval(refreshMarine, 250);
+  refreshMarine();
 
   // Default to Manual
   setBridgeStatus(BridgeState.DOWN);

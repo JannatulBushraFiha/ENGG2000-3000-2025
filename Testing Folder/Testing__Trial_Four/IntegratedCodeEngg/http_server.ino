@@ -10,11 +10,18 @@ void handleCloseBridge();
 void handleEmergencyStop();
 
 // experiment with removing forward declaration and see if still works
+extern volatile bool         g_emergency;
+extern volatile BridgeCmd    g_cmd_manual;
+extern volatile BridgeCmd    g_cmd_auto;
+extern volatile MarineStatus g_marine_status;
 extern bool bridge_open();
 extern bool bridge_close();
 extern bool stop();
 extern SystemMode g_mode;
 extern BridgeCmd g_cmd;
+extern float g_distance_cm; 
+extern float distanceCm1, distanceCm2, distanceCm3, distanceCm4;
+
 
 WebServer server(80);
 
@@ -84,7 +91,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
       display: flex;
       gap: 20px;
     }
-    .marine, .manual {
+    .ship, .manual {
       flex: 1;
     }
     .substatus {
@@ -170,6 +177,26 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     .flashing-element-text {
       animation: blink-text 1.35s infinite; 
     }
+    @keyframes blink-animation-ship{
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+    .flashing-element-shipdetected{
+      animation: blink-animation-ship 0.5s infinite;
+    }
+    .flashing-element-shippassing{
+      animation: blink-animation-ship 0.5s infinite;
+    }
+    .flashing-element-shipdeparted{
+      animation: blink-animation-ship 0.5s infinite;
+    }
   </style>
 </head>
 
@@ -195,8 +222,8 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     <!-- Bottom row -->
     <div class="bottom-row">
       <!-- Marine Status -->
-      <div class="box marine">
-        <div class="title">Marine Status</div>
+      <div class="box ship">
+        <div class="title">Ship Status</div>
         <div class="substatus" id="shipDetected">
           Ship Detected
           <span class="dot red" id="shipDetectedLight"></span>
@@ -236,6 +263,11 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     MOVING: "Bridge Moving",
     HALT: "Bridge Halt"
   });
+  const MarineState = Object.freeze({
+    DETECTED: "Ship Detected",
+    PASSING: "Ship Passing", 
+    DEPARTED: "Ship Departed"
+  }); 
 
   //Hard-coded moving time for 4 seconds
   //Change when the timer variable is made and updated
@@ -250,7 +282,9 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
   const btnAutoMode   = document.getElementById("btnAutoMode");
   const trafficStatusDot = document.getElementById("trafficStatus");
   const marineStatusDot = document.getElementById("marineStatus");
-
+  const shipDetectedDot = document.getElementById("shipDetectedLight");
+  const shipPassingDot = document.getElementById("shipPassingLight");
+  const shipDepartedDot = document.getElementById("shipDepartedLight");
 
   // Functions
   function setBridgeStatus(newState) {
@@ -279,6 +313,31 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
       //Start flashing while moving
       trafficStatusDot.classList.add("flashing-element");
       bridgeStatusElement.classList.add("flashing-element-text");
+    }
+  }
+
+  function setShipStatus(newState){
+    shipDetectedDot.className = "dot white"; 
+    shipPassingDot.className = "dot white";
+    shipDepartedDot.className = "dot white"; 
+    shipDetectedDot.classList.remove("flashing-element-shipdetected");
+    shipPassingDot.classList.remove("flashing-element-shippassing");
+    shipDepartedDot.classList.remove("flashing-element-shipdeparted");
+
+    //handle CLEAR
+    if (!newState || newState === 'CLEAR'){
+      return; 
+    }
+
+    if(newState === MarineState.DETECTED){
+      shipDetectedDot.className = "dot red";
+      shipDetectedDot.classList.add("flashing-element-shipdetected");
+    } else if (newState === MarineState.PASSING){
+      shipPassingDot.className = "dot red"; 
+      shipPassingDot.classList.add("flashing-element-shippassing");
+    } else if (newState === MarineState.DEPARTED){
+      shipDepartedDot.className = "dot green"; 
+      shipDepartedDot.classList.add("flashing-element-shipdeparted");
     }
   }
 
@@ -338,6 +397,47 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     sendCommand('/api/mode/auto').then(() => setModeUI('auto'));
   });
 
+  //MAP API for Ship DETECTED/PASSING/DEPARTED/CLEAR 
+  function mapApiStatusToUI(s){
+    switch (s) {
+      case 'DETECTED': return MarineState.DETECTED;
+      case 'PASSING':  return MarineState.PASSING;
+      case 'DEPARTED': return MarineState.DEPARTED;
+      case 'CLEAR':    return 'CLEAR';
+      default:         return null;
+    }
+  }
+
+  async function refreshMarine(){
+    try {
+      const r = await fetch('/api/marine', { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+
+      // Update mode buttons if you like (AUTO disables Open/Close)
+      if (d.mode === 'AUTO') setModeUI('auto'); else if (d.mode === 'MANUAL') setModeUI('manual');
+
+      // Update the Ship Status lights
+      const uiState = mapApiStatusToUI(d.marine_status);
+      setShipStatus(uiState);
+
+      // Optional: color the small marine dot at top row
+      // Red when DETECTED/PASSING; green on CLEAR/DEPARTED
+      if (uiState === MarineState.DETECTED || uiState === MarineState.PASSING) {
+        marineStatusDot.className = "dot red";
+      } else {
+        marineStatusDot.className = "dot green";
+      }
+    } catch (e) {
+      // On error, leave existing UI as-is or show a neutral state
+      console.warn('refreshMarine failed:', e);
+    }
+  }
+
+  // Poll every 250 ms
+  setInterval(refreshMarine, 250);
+  refreshMarine();
+
   // Default to Manual
   setBridgeStatus(BridgeState.DOWN);
   setModeUI('manual');
@@ -348,9 +448,51 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
 
 // ---------------- WebServer setup ----------------
 
+// Enum -> readable text for JSON
+static const char* marineStatusToString(MarineStatus s) {
+  switch (s) {
+    case MARINE_CLEAR:    return "CLEAR";
+    case MARINE_DETECTED: return "DETECTED";
+    case MARINE_PASSING:  return "PASSING";
+    case MARINE_DEPARTED: return "DEPARTED";
+    default:              return "?";
+  }
+}
+
+// Format float or "null" (keeps JSON clean when readings are invalid)
+static String f_or_null(float v, uint8_t dp = 1) {
+  if (isnan(v) || v <= 0) return F("null");
+  String s; s.reserve(8);
+  s += String(v, dp);
+  return s;
+}
+
+static void handleApiMarine() {
+  String json;
+  json.reserve(256);
+  json += F("{\"d1\":");  json += f_or_null(distanceCm1);
+  json += F(",\"d2\":");  json += f_or_null(distanceCm2);
+  json += F(",\"d3\":");  json += f_or_null(distanceCm3);
+  json += F(",\"d4\":");  json += f_or_null(distanceCm4);
+  json += F(",\"nearest_cm\":"); json += f_or_null(g_distance_cm);
+  json += F(",\"marine_status\":\""); json += marineStatusToString(g_marine_status); json += '\"';
+  json += F(",\"mode\":\""); json += (g_mode == MODE_AUTO ? "MANUAL" : "MANUAL"); // placeholder
+  json.remove(json.length()-7); // remove the wrong "MANUAL"
+  json += (g_mode == MODE_AUTO ? "AUTO" : "MANUAL"); // correct mode insert
+  json += F("\"}");
+
+  server.sendHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  server.send(200, "application/json", json);
+}
+
+
+
 void setupWebServer()
 {
   Serial.println("http_server::setupWebServer() start");
+
+  //Register marine endpoints
+  server.on("/api/marine", HTTP_GET, handleApiMarine);
 
   server.on("/", HTTP_GET, []()
             { server.send_P(200, "text/html", HTML_PAGE); });
@@ -377,7 +519,7 @@ void setupWebServer()
     g_cmd_auto   = CMD_STOP;
 
     
-    server.send(200, "application/json", "{\"status\":\"stopping\"}"); });
+  server.send(200, "application/json", "{\"status\":\"stopping\"}"); });
 
   // Mode switching
   server.on("/api/mode/auto", HTTP_POST, []()
@@ -397,9 +539,10 @@ void setupWebServer()
     g_cmd_auto   = CMD_IDLE; // neuter auto
     server.send(200, "application/json", "{\"mode\":\"manual\"}"); });
 
-  server.on("api/status", HTTP_GET, []() {
+  server.on("/api/status", HTTP_GET, []() {
     String status = "unknown";
     String trafficLight = "red"; 
+
 
     //Recommended to add a timer as a tracking condition
     //check if emergency stop is active. 
@@ -414,7 +557,7 @@ void setupWebServer()
       trafficLight = "red"; 
     } 
     //closing
-    else if (g_cmd_manual == CMD_CLOSE || g_cmd_auto = CMD_CLOSE){
+    else if (g_cmd_manual == CMD_CLOSE || g_cmd_auto == CMD_CLOSE){
       status = "moving";
       trafficLight = "red";
     }

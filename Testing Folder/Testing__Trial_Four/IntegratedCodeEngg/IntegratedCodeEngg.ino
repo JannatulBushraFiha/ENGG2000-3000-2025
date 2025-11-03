@@ -248,6 +248,17 @@ void blinkEmergencyLeds() {
 }
 
 
+//helper function for debugging
+static const char* marineStatusToString(MarineStatus s) {
+  switch (s) {
+      case MARINE_CLEAR:    return "CLEAR";
+      case MARINE_DETECTED: return "DETECTED";
+      case MARINE_PASSING:  return "PASSING";
+      case MARINE_DEPARTED: return "DEPARTED";
+      default:              return "?";
+  }
+}
+
 void setup() {
   Serial.begin(115200);
 
@@ -288,19 +299,6 @@ void loop() {
     marineController(g_distance_cm); 
     // Compute the AUTO command based on latest distance
     autoController(g_distance_cm);
-
-
-//helper function for debugging
-static const char* marineStatusToString(MarineStatus s) {
-  switch (s) {
-      case MARINE_CLEAR:    return "CLEAR";
-      case MARINE_DETECTED: return "DETECTED";
-      case MARINE_PASSING:  return "PASSING";
-      case MARINE_DEPARTED: return "DEPARTED";
-      default:              return "?";
-  }
-}
-
     Serial.printf("[US] D1=%.1f D2=%.1f D3=%.1f D4=%.1f -> nearest=%.1f\n",
               distanceCm1, distanceCm2, distanceCm3, distanceCm4, g_distance_cm, marineStatusToString(g_marine_status));
 

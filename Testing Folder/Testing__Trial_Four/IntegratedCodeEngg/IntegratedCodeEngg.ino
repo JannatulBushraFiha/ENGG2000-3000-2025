@@ -40,6 +40,8 @@ SystemMode g_mode = MODE_AUTO;             // manual is default
 volatile BridgeCmd  g_cmd_manual = CMD_IDLE; // set by web UI
 volatile BridgeCmd  g_cmd_auto   = CMD_IDLE; // set by autoController()
 volatile bool      g_emergency  = false;   // <-- NEW
+//Global MarineStatus Definition(declared in state.h)
+volatile MarineStatus g_marine_status = MARINE_CLEAR; //Initial UI status 
 
 
 unsigned long previousMillis = 0;
@@ -166,6 +168,66 @@ static void autoController(float distance_cm) {
   last = next;
 }
 
+
+//Marine Status Controller 
+static const float MS_PASSING_NEAR_CM = 40.0f;     // 40cm PASSING
+static const float MS_DETECT_FAR_CM   = 80.0f;    // 80cm DETECTED
+static const float MS_HYST            = 5.0f;      // hysteresis margin (cm)
+static const unsigned long MS_DEPARTED_HOLD_MS = 3000; // show DEPARTED for 3s
+
+static unsigned long s_departed_since_ms = 0;
+
+void marineController(float nearest_distance_cm) {
+  MarineStatus curr = g_marine_status;
+
+  switch (curr) {
+    case MARINE_CLEAR:
+      if (!isnan(nearest_distance_cm) && nearest_distance_cm > 0) {
+        if (nearest_distance_cm <= MS_PASSING_NEAR_CM) {
+          g_marine_status = MARINE_PASSING;
+        } else if (nearest_distance_cm <= MS_DETECT_FAR_CM) {
+          g_marine_status = MARINE_DETECTED;
+        }
+      }
+      break;
+
+    case MARINE_DETECTED:
+      if (nearest_distance_cm <= MS_PASSING_NEAR_CM - MS_HYST) {
+        g_marine_status = MARINE_PASSING;
+      } else if (isnan(nearest_distance_cm) || nearest_distance_cm > MS_DETECT_FAR_CM + MS_HYST) {
+        g_marine_status = MARINE_DEPARTED;
+        s_departed_since_ms = millis();
+      }
+      break;
+
+    case MARINE_PASSING:
+      if (isnan(nearest_distance_cm) || nearest_distance_cm > MS_PASSING_NEAR_CM + MS_HYST) {
+        if (!isnan(nearest_distance_cm) && nearest_distance_cm <= MS_DETECT_FAR_CM - MS_HYST) {
+          g_marine_status = MARINE_DETECTED;
+        } else {
+          g_marine_status = MARINE_DEPARTED;
+          s_departed_since_ms = millis();
+        }
+      }
+      break;
+
+    case MARINE_DEPARTED:
+      if (!isnan(nearest_distance_cm) && nearest_distance_cm <= MS_DETECT_FAR_CM - MS_HYST) {
+        g_marine_status = (nearest_distance_cm <= MS_PASSING_NEAR_CM)
+                          ? MARINE_PASSING
+                          : MARINE_DETECTED;
+      } else if (millis() - s_departed_since_ms >= MS_DEPARTED_HOLD_MS) {
+        g_marine_status = MARINE_CLEAR;
+      }
+      break;
+  }
+}
+
+
+
+
+
+
 // --- Ultrasonic helpers
 
 
@@ -222,10 +284,25 @@ void loop() {
     }
 
     g_distance_cm = nearest;
+    // Continuously updating marine status for UI
+    marineController(g_distance_cm); 
     // Compute the AUTO command based on latest distance
     autoController(g_distance_cm);
+
+
+//helper function for debugging
+static const char* marineStatusToString(MarineStatus s) {
+  switch (s) {
+      case MARINE_CLEAR:    return "CLEAR";
+      case MARINE_DETECTED: return "DETECTED";
+      case MARINE_PASSING:  return "PASSING";
+      case MARINE_DEPARTED: return "DEPARTED";
+      default:              return "?";
+  }
+}
+
     Serial.printf("[US] D1=%.1f D2=%.1f D3=%.1f D4=%.1f -> nearest=%.1f\n",
-              distanceCm1, distanceCm2, distanceCm3, distanceCm4, g_distance_cm);
+              distanceCm1, distanceCm2, distanceCm3, distanceCm4, g_distance_cm, marineStatusToString(g_marine_status));
 
   }
   // ---------------------------------------------------------------

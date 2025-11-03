@@ -13,14 +13,15 @@ void handleEmergencyStop();
 extern volatile bool         g_emergency;
 extern volatile BridgeCmd    g_cmd_manual;
 extern volatile BridgeCmd    g_cmd_auto;
-extern volatile MarineStatus g_marine_status;
 extern bool bridge_open();
 extern bool bridge_close();
 extern bool stop();
 extern SystemMode g_mode;
 extern BridgeCmd g_cmd;
 extern float g_distance_cm; 
-extern float distanceCm1, distanceCm2, distanceCm3, distanceCm4;
+extern float distanceCm1, distanceCm2;
+extern const char* marineStatusToString(MarineStatus s);
+
 
 
 WebServer server(80);
@@ -271,7 +272,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
 
   //Hard-coded moving time for 4 seconds
   //Change when the timer variable is made and updated
-  const MOVING_DURATION_MS = 4000; 
+  const MOVING_DURATION_MS = 30000; 
 
   // Elements
   const bridgeStatusElement = document.getElementById("bridgeStatus");
@@ -449,20 +450,12 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
 // ---------------- WebServer setup ----------------
 
 // Enum -> readable text for JSON
-static const char* marineStatusToString(MarineStatus s) {
-  switch (s) {
-    case MARINE_CLEAR:    return "CLEAR";
-    case MARINE_DETECTED: return "DETECTED";
-    case MARINE_PASSING:  return "PASSING";
-    case MARINE_DEPARTED: return "DEPARTED";
-    default:              return "?";
-  }
-}
+
 
 // Format float or "null" (keeps JSON clean when readings are invalid)
-static String f_or_null(float v, uint8_t dp = 1) {
+static String f_or_null(float v, unsigned int dp = 1) {
   if (isnan(v) || v <= 0) return F("null");
-  String s; s.reserve(8);
+  String s; s.reserve(12);
   s += String(v, dp);
   return s;
 }
@@ -472,8 +465,6 @@ static void handleApiMarine() {
   json.reserve(256);
   json += F("{\"d1\":");  json += f_or_null(distanceCm1);
   json += F(",\"d2\":");  json += f_or_null(distanceCm2);
-  json += F(",\"d3\":");  json += f_or_null(distanceCm3);
-  json += F(",\"d4\":");  json += f_or_null(distanceCm4);
   json += F(",\"nearest_cm\":"); json += f_or_null(g_distance_cm);
   json += F(",\"marine_status\":\""); json += marineStatusToString(g_marine_status); json += '\"';
   json += F(",\"mode\":\""); json += (g_mode == MODE_AUTO ? "MANUAL" : "MANUAL"); // placeholder

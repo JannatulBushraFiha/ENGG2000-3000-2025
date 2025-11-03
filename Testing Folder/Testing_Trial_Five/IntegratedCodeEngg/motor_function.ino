@@ -10,7 +10,7 @@ void motor_coast();
 
 
 void setupMotorFunction() {
-  // Removed: setupUS();   // ❌ wrong name
+  
   // Nothing needed here for ultrasonic; it is initialized by initUltrasonic() in main
   pinMode(MOTOR_IN1, OUTPUT);
   pinMode(MOTOR_IN2, OUTPUT);
@@ -18,7 +18,7 @@ void setupMotorFunction() {
   digitalWrite(RED_WARNING_LIGHT, LOW);
 }
 
-static inline void driveOpen()  { digitalWrite(MOTOR_IN1, HIGH); digitalWrite(MOTOR_IN2, LOW);  }
+static inline void driveOpen()  { digitalWrite(MOTOR_IN1, HIGH); digitalWrite(MOTOR_IN2, LOW); }
 static inline void driveClose() { digitalWrite(MOTOR_IN1, LOW);  digitalWrite(MOTOR_IN2, HIGH); }
 static inline void driveStop()  { digitalWrite(MOTOR_IN1, LOW);  digitalWrite(MOTOR_IN2, LOW);  }
 

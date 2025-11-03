@@ -12,14 +12,11 @@
 #define MOTOR_IN2        2
 #define LDR_PIN         27
 #define NIGHT_LIGHTS    17
-const int trigPin1 = 22;
-const int echoPin1 = 23;
+const int trigPin1 = 12;
+const int echoPin1 = 14;
 const int trigPin2 = 33;
 const int echoPin2 = 32;
-const int trigPin3 = 33;
-const int echoPin3 = 19;
-const int trigPin4 = 18;
-const int echoPin4 = 26;
+
 
 constexpr float OPEN_ON_CM  = 19.0f;  // start opening when <= 19 cm
 constexpr float OPEN_OFF_CM = 21.0f;  // stop opening when >= 21 cm (hysteresis)
@@ -29,11 +26,11 @@ constexpr uint32_t FRESH_TIMEOUT_MS = 600; // stop if no valid ping for 0.6s
 unsigned long timeout = 30000; // 30ms max wait
 unsigned long interval = 100;  // measurement interval in ms
 
-static bool us_seenHigh[4] = {false,false,false,false};
 
 
 // Distance variables
-float distanceCm1, distanceCm2, distanceCm3, distanceCm4;
+float distanceCm1 = NAN, distanceCm2 = NAN;
+
 
 // ---------------- App state
 SystemMode g_mode = MODE_AUTO;             // manual is default
@@ -54,10 +51,11 @@ enum US_State { US_IDLE, US_TRIGGER, US_WAIT_ECHO };
 static US_State us_state = US_IDLE;
 static int us_index = 0;
 static uint32_t us_timer = 0;
-static unsigned long us_pulseStart[4] = {0,0,0,0};
+static unsigned long us_pulseStart[2] = {0, 0};
+static bool us_seenHigh[2] = {false, false};
 
-const int trigPins[4] = {trigPin1, trigPin2, trigPin3, trigPin4};
-const int echoPins[4] = {echoPin1, echoPin2, echoPin3, echoPin4};
+const int trigPins[2] = { trigPin1, trigPin2 };
+const int echoPins[2] = { echoPin1, echoPin2 };
 
 // Forward decls (your existing code)
 void setupWiFi();
@@ -77,12 +75,12 @@ static inline float us_to_cm(unsigned long us) {
 }
 
 void initUltrasonic() {
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 2; ++i) {
     pinMode(trigPins[i], OUTPUT);
     digitalWrite(trigPins[i], LOW);
-    pinMode(echoPins[i], INPUT_PULLDOWN);  // <-- important for stable idle
+    pinMode(echoPins[i], INPUT_PULLDOWN);  // stable idle
   }
-  distanceCm1 = distanceCm2 = distanceCm3 = distanceCm4 = NAN;
+  distanceCm1 = distanceCm2 = NAN;
 }
 
 void updateUltrasonic() {
@@ -93,12 +91,14 @@ void updateUltrasonic() {
       break;
 
     case US_TRIGGER:
-      // reset edge-tracking for this channel
+      // reset edge-tracking
       us_pulseStart[us_index] = 0;
-      us_seenHigh[us_index]   = false;
+      us_seenHigh[us_index] = false;
 
-      digitalWrite(trigPins[us_index], LOW);  delayMicroseconds(2);
-      digitalWrite(trigPins[us_index], HIGH); delayMicroseconds(10);
+      digitalWrite(trigPins[us_index], LOW);
+      delayMicroseconds(2);
+      digitalWrite(trigPins[us_index], HIGH);
+      delayMicroseconds(10);
       digitalWrite(trigPins[us_index], LOW);
 
       us_timer = micros();
@@ -108,40 +108,37 @@ void updateUltrasonic() {
     case US_WAIT_ECHO: {
       int e = echoPins[us_index];
 
-      // latch the FIRST rising edge only
+      // Rising edge
       if (!us_seenHigh[us_index] && digitalRead(e) == HIGH) {
         us_pulseStart[us_index] = micros();
-        us_seenHigh[us_index]   = true;
+        us_seenHigh[us_index] = true;
       }
 
-      // after we’ve seen HIGH, wait for falling edge
+      // Falling edge
       if (us_seenHigh[us_index] && digitalRead(e) == LOW) {
         unsigned long pulse = micros() - us_pulseStart[us_index];
         float cm = us_to_cm(pulse);
 
-        if      (us_index == 0) distanceCm1 = cm;
-        else if (us_index == 1) distanceCm2 = cm;
-        else if (us_index == 2) distanceCm3 = cm;
-        else                    distanceCm4 = cm;
+        if (us_index == 0) distanceCm1 = cm;
+        else               distanceCm2 = cm;
 
         us_index++;
-        us_state = (us_index >= 4) ? US_IDLE : US_TRIGGER;
-        return;  // avoid also taking timeout path this cycle
-      }
-      // Timeout safety: no echo or too long
-      else if (micros() - us_timer > timeout) {
-        if      (us_index == 0) distanceCm1 = NAN;
-        else if (us_index == 1) distanceCm2 = NAN;
-        else if (us_index == 2) distanceCm3 = NAN;
-        else                    distanceCm4 = NAN;
-
-        us_index++;
-        us_state = (us_index >= 4) ? US_IDLE : US_TRIGGER;
+        us_state = (us_index >= 2) ? US_IDLE : US_TRIGGER;
         return;
       }
-    } break; // end US_WAIT_ECHO
-  } // end switch
-} // end updateUltrasonic()
+
+      // Timeout
+      if (micros() - us_timer > timeout) {
+        if (us_index == 0) distanceCm1 = NAN;
+        else               distanceCm2 = NAN;
+
+        us_index++;
+        us_state = (us_index >= 2) ? US_IDLE : US_TRIGGER;
+        return;
+      }
+    } break;
+  }
+}
 
 
 // ===== AUTO controller: computes g_cmd_auto only (never touches manual) =====
@@ -149,20 +146,19 @@ static void autoController(float distance_cm) {
   static BridgeCmd last = CMD_STOP;
   static uint32_t lastValidMs = 0;
 
-  // track freshness
-  if (!isnan(distance_cm) && distance_cm > 0.0f) {
+  if (!isnan(distance_cm) && distance_cm > 0.0f)
     lastValidMs = millis();
-  }
+
   if (millis() - lastValidMs > FRESH_TIMEOUT_MS) {
     g_cmd_auto = CMD_STOP;
-    last = g_cmd_auto;
+    last = CMD_STOP;
     return;
   }
 
   BridgeCmd next = last;
   if (distance_cm <= OPEN_ON_CM)       next = CMD_OPEN;
-  else if (distance_cm >= OPEN_OFF_CM) next = CMD_STOP;   // stop when not within ~20 cm
-  else                                  next = CMD_STOP;  // mid-band: be safe
+  else if (distance_cm >= OPEN_OFF_CM) next = CMD_STOP;
+  else                                 next = CMD_STOP;
 
   g_cmd_auto = next;
   last = next;
@@ -249,15 +245,7 @@ void blinkEmergencyLeds() {
 
 
 //helper function for debugging
-static const char* marineStatusToString(MarineStatus s) {
-  switch (s) {
-      case MARINE_CLEAR:    return "CLEAR";
-      case MARINE_DETECTED: return "DETECTED";
-      case MARINE_PASSING:  return "PASSING";
-      case MARINE_DEPARTED: return "DEPARTED";
-      default:              return "?";
-  }
-}
+
 
 void setup() {
   Serial.begin(115200);
@@ -278,45 +266,50 @@ void setup() {
 }
 
 void loop() {
-  // keep web/motor responsive
   handleWebServerClients();
-  updateUltrasonic();   // <<— make sure this runs every iteration
+  updateUltrasonic();
 
   if (us_state == US_IDLE && g_mode == MODE_AUTO) {
-    // All 4 values updated --> choose nearest
     float nearest = NAN;
-    float arr[4] = { distanceCm1, distanceCm2, distanceCm3, distanceCm4 };
+    float arr[2] = { distanceCm1, distanceCm2 };
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 2; i++) {
       if (!isnan(arr[i]) && arr[i] > 0) {
-        if (isnan(nearest) || arr[i] < nearest)
-          nearest = arr[i];
+        if (isnan(nearest) || arr[i] < nearest) nearest = arr[i];
       }
     }
 
     g_distance_cm = nearest;
-    // Continuously updating marine status for UI
-    marineController(g_distance_cm); 
-    // Compute the AUTO command based on latest distance
     autoController(g_distance_cm);
-    Serial.printf("[US] D1=%.1f D2=%.1f D3=%.1f D4=%.1f -> nearest=%.1f\n",
-              distanceCm1, distanceCm2, distanceCm3, distanceCm4, g_distance_cm, marineStatusToString(g_marine_status));
 
+    Serial.printf("[US] D1=%.1f cm, D2=%.1f cm -> nearest=%.1f cm\n",
+                  distanceCm1, distanceCm2, g_distance_cm);
   }
-  // ---------------------------------------------------------------
 
-  // Single place that drives the H-bridge (picks manual OR auto)
+  // Drive the H-bridge / LEDs each tick
   motorFunctionLoop();
+
   if (g_emergency) {
-  blinkEmergencyLeds();  // all LEDs blink
-} else {
-  nightLightsLoop();
-  warningLightsLoop();
-  altitudeLightLoop();
+    blinkEmergencyLeds();  // all LEDs blink
+  } else {
+    nightLightsLoop();
+    warningLightsLoop();
+    altitudeLightLoop();
+  }
+
+  // (optional) small non-blocking pacing here if you want
+  // delay(1);
 }
 
-  // small pause to reduce serial spam / CPU (non-blocking is better, but fine)
-  
+const char* marineStatusToString(MarineStatus s) {
+  switch (s) {
+    case MARINE_CLEAR:    return "CLEAR";
+    case MARINE_DETECTED: return "DETECTED";
+    case MARINE_PASSING:  return "PASSING";
+    case MARINE_DEPARTED: return "DEPARTED";
+    default:              return "?";
+  }
 }
+
 
 
